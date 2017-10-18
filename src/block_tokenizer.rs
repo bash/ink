@@ -1,5 +1,17 @@
 use std::collections::VecDeque;
 
+macro_rules! parse_line_starter {
+  ($line:expr, $starter:expr, $variant: ident) => {
+    if $line.starts_with($starter) {
+      return Some(Line::$variant(
+        $line.chars()
+            .skip($starter.len())
+            .collect()
+      ))
+    }
+  }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Line {
   Blank,
@@ -45,53 +57,12 @@ impl BlockTokenizer {
           return Some(Line::Blank);
         }
 
-        if line.starts_with("# ") {
-          return Some(Line::Heading1(
-            line.chars()
-                .skip(2)
-                .collect()
-          ))
-        }
-
-        if line.starts_with("## ") {
-          return Some(Line::Heading2(
-            line.chars()
-                .skip(3)
-                .collect()
-          ))
-        }
-
-        if line.starts_with("### ") {
-          return Some(Line::Heading3(
-            line.chars()
-                .skip(4)
-                .collect()
-          ))
-        }
-
-        if line.starts_with("> ") {
-          return Some(Line::Quote(
-            line.chars()
-                .skip(2)
-                .collect()
-          ))
-        }
-
-        if line.starts_with("- ") {
-          return Some(Line::UnorderedList(
-            line.chars()
-                .skip(2)
-                .collect()
-          ))
-        }
-
-        if line.starts_with(". ") {
-          return Some(Line::OrderedList(
-            line.chars()
-                .skip(2)
-                .collect()
-          ))
-        }
+        parse_line_starter!(line, "# ", Heading1);
+        parse_line_starter!(line, "## ", Heading2);
+        parse_line_starter!(line, "### ", Heading3);
+        parse_line_starter!(line, "> ", Quote);
+        parse_line_starter!(line, "- ", UnorderedList);
+        parse_line_starter!(line, ". ", OrderedList);
 
         if line.starts_with('[') && trimmed_line.ends_with(']') {
           return Some(Line::Annotation(
