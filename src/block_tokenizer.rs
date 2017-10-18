@@ -37,20 +37,17 @@ pub struct BlockTokenizer {
     lines: VecDeque<String>,
 }
 
-fn parse_annotation(line: &str) -> Option<Line> {
-    use super::constants;
-
+fn parse_annotation(line: &str) -> Line {
     let trimmed = line.trim();
 
-    if line.starts_with(constants::ANNOTATION_PREFIX_TOKEN) &&
-        trimmed.ends_with(constants::ANNOTATION_SUFFIX_TOKEN)
-    {
-        return Some(Line::Decorator(
-            trimmed.chars().skip(1).take(trimmed.len() - 2).collect(),
-        ));
-    }
+    Line::Decorator(trimmed.chars().skip(1).take(trimmed.len() - 2).collect())
+}
 
-    None
+fn is_annotation(line: &str) -> bool {
+    use super::constants;
+
+    return line.starts_with(constants::ANNOTATION_PREFIX_TOKEN) &&
+        line.trim().ends_with(constants::ANNOTATION_SUFFIX_TOKEN);
 }
 
 impl BlockTokenizer {
@@ -91,8 +88,8 @@ impl BlockTokenizer {
                 parse_line_starter!(line, constants::UNORDERED_LIST_TOKEN, UnorderedList);
                 parse_line_starter!(line, constants::ORDERED_LIST_TOKEN, OrderedList);
 
-                if let Some(line) = parse_annotation(&line) {
-                    return Some(line);
+                if is_annotation(&line) {
+                    return Some(parse_annotation(&line));
                 }
 
                 Some(Line::Text(line))
