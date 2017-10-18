@@ -21,9 +21,15 @@ pub enum Line {
     Heading3(String),
     Text(String),
     Quote(String),
-    Annotation(String),
+    Decorator(String),
     UnorderedList(String),
     OrderedList(String),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum RawLine {
+    Divider,
+    Text(String),
 }
 
 #[derive(Debug)]
@@ -31,52 +37,62 @@ pub struct BlockTokenizer {
     lines: VecDeque<String>,
 }
 
+fn parse_annotation(line: &str) -> Option<Line> {
+    use super::constants;
+
+    let trimmed = line.trim();
+
+    if line.starts_with(constants::ANNOTATION_PREFIX_TOKEN) &&
+        trimmed.ends_with(constants::ANNOTATION_SUFFIX_TOKEN)
+    {
+        return Some(Line::Decorator(
+            trimmed.chars().skip(1).take(trimmed.len() - 2).collect(),
+        ));
+    }
+
+    None
+}
+
 impl BlockTokenizer {
     pub fn new<S: Into<String>>(input: S) -> Self {
-        // TODO: define behaviour around \r\n
-        let lines = input
-            .into()
-            .split('\n')
-            .map(|line| line.to_string())
-            .collect();
+        let lines = input.into().lines().map(|line| line.to_string()).collect();
 
         BlockTokenizer { lines }
     }
 
-    pub fn consume_raw_line(&mut self) -> Option<String> {
-        self.lines.pop_front()
+    pub fn consume_raw_line(&mut self) -> Option<RawLine> {
+        match self.lines.pop_front() {
+            None => None,
+            Some(line) => {
+                if line.starts_with("---") && line.trim().chars().all(|c| c == '-') {
+                    return Some(RawLine::Divider);
+                }
+
+                Some(RawLine::Text(line))
+            }
+        }
     }
 
     pub fn consume_line(&mut self) -> Option<Line> {
         match self.consume_raw_line() {
-            None => return None,
-            Some(line) => {
-                // TODO: optimize
-                let trimmed_line = line.trim().to_string();
-
-                if trimmed_line.len() == 0 {
+            None => None,
+            Some(RawLine::Divider) => Some(Line::Divider),
+            Some(RawLine::Text(line)) => {
+                if line.chars().all(char::is_whitespace) {
                     return Some(Line::Blank);
                 }
 
-                parse_line_starter!(line, "# ", Heading1);
-                parse_line_starter!(line, "## ", Heading2);
-                parse_line_starter!(line, "### ", Heading3);
-                parse_line_starter!(line, "> ", Quote);
-                parse_line_starter!(line, "- ", UnorderedList);
-                parse_line_starter!(line, ". ", OrderedList);
+                use super::constants;
 
-                if line.starts_with('[') && trimmed_line.ends_with(']') {
-                    return Some(Line::Annotation(
-                        trimmed_line
-                            .chars()
-                            .skip(1)
-                            .take(trimmed_line.len() - 2)
-                            .collect(),
-                    ));
-                }
+                parse_line_starter!(line, constants::HEADING1_TOKEN, Heading1);
+                parse_line_starter!(line, constants::HEADING2_TOKEN, Heading2);
+                parse_line_starter!(line, constants::HEADING3_TOKEN, Heading3);
+                parse_line_starter!(line, constants::QUOTE_TOKEN, Quote);
+                parse_line_starter!(line, constants::UNORDERED_LIST_TOKEN, UnorderedList);
+                parse_line_starter!(line, constants::ORDERED_LIST_TOKEN, OrderedList);
 
-                if line.starts_with("---") && trimmed_line.chars().all(|c| c == '-') {
-                    return Some(Line::Divider);
+                if let Some(line) = parse_annotation(&line) {
+                    return Some(line);
                 }
 
                 Some(Line::Text(line))
@@ -151,16 +167,16 @@ mod tests {
     }
 
     #[test]
-    fn annotation_works() {
+    fn decorator_works() {
         let mut tokenizer = BlockTokenizer::new("[code]\n[code]   \n [code] \n  [code]  \n[code");
 
         assert_eq!(
             tokenizer.consume_line(),
-            Some(Line::Annotation("code".into()))
+            Some(Line::Decorator("code".into()))
         );
         assert_eq!(
             tokenizer.consume_line(),
-            Some(Line::Annotation("code".into()))
+            Some(Line::Decorator("code".into()))
         );
         assert_eq!(
             tokenizer.consume_line(),
@@ -209,5 +225,12 @@ mod tests {
             tokenizer.consume_line(),
             Some(Line::Text("---foobar".into()))
         );
+    }
+
+    #[test]
+    fn empty_works() {
+        let mut tokenizer = BlockTokenizer::new("   \t");
+
+        assert_eq!(tokenizer.consume_line(), Some(Line::Blank));
     }
 }
