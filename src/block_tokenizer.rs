@@ -1,13 +1,24 @@
 use std::collections::VecDeque;
+use super::constants;
 
-macro_rules! parse_line_starter {
+macro_rules! parse_starter {
   ($line:expr, $starter:expr, $variant: ident) => {
     if $line.starts_with($starter) {
-      return Some(Line::$variant(
-        $line.chars()
-             .skip($starter.len())
-             .collect()
-      ))
+        Some(Line::$variant(
+            $line.chars()
+                .skip($starter.len())
+                .collect()
+        ))
+    } else {
+        None
+    }
+  }
+}
+
+macro_rules! detect_line_starter {
+  ($line:expr, $starter:expr, $variant: ident) => {
+    if $line.starts_with($starter) {
+      return LineType::$variant;
     }
   }
 }
@@ -27,6 +38,20 @@ pub enum Line {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+pub enum LineType {
+    Blank,
+    Divider,
+    Heading1,
+    Heading2,
+    Heading3,
+    Text,
+    Quote,
+    Decorator,
+    UnorderedList,
+    OrderedList,
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum RawLine {
     Divider,
     Text(String),
@@ -37,17 +62,42 @@ pub struct BlockTokenizer {
     lines: VecDeque<String>,
 }
 
-fn parse_annotation(line: &str) -> Line {
+fn parse_decorator(line: &str) -> Line {
     let trimmed = line.trim();
 
     Line::Decorator(trimmed.chars().skip(1).take(trimmed.len() - 2).collect())
 }
 
-fn is_annotation(line: &str) -> bool {
-    use super::constants;
+fn is_decorator(line: &str) -> bool {
+    line.starts_with(constants::ANNOTATION_PREFIX_TOKEN) &&
+        line.trim().ends_with(constants::ANNOTATION_SUFFIX_TOKEN)
+}
 
-    return line.starts_with(constants::ANNOTATION_PREFIX_TOKEN) &&
-        line.trim().ends_with(constants::ANNOTATION_SUFFIX_TOKEN);
+fn is_divider(line: &str) -> bool {
+    line.starts_with("---") && line.trim().chars().all(|c| c == '-')
+}
+
+fn get_line_type(line: &str) -> LineType {
+    if is_divider(line) {
+        return LineType::Divider;
+    }
+
+    if is_decorator(line) {
+        return LineType::Decorator;
+    }
+
+    if line.chars().all(char::is_whitespace) {
+        return LineType::Blank;
+    }
+
+    detect_line_starter!(line, constants::HEADING1_TOKEN, Heading1);
+    detect_line_starter!(line, constants::HEADING2_TOKEN, Heading2);
+    detect_line_starter!(line, constants::HEADING3_TOKEN, Heading3);
+    detect_line_starter!(line, constants::QUOTE_TOKEN, Quote);
+    detect_line_starter!(line, constants::UNORDERED_LIST_TOKEN, UnorderedList);
+    detect_line_starter!(line, constants::ORDERED_LIST_TOKEN, OrderedList);
+
+    LineType::Text
 }
 
 impl BlockTokenizer {
@@ -57,43 +107,45 @@ impl BlockTokenizer {
         BlockTokenizer { lines }
     }
 
-    pub fn consume_raw_line(&mut self) -> Option<RawLine> {
-        match self.lines.pop_front() {
+    pub fn peek(&self) -> Option<LineType> {
+        match self.lines.get(0) {
+            None => None,
+            Some(line) => Some(get_line_type(line)),
+        }
+    }
+
+    pub fn consume(&mut self, line_type: LineType) -> Option<Line> {
+        match self.consume_raw() {
             None => None,
             Some(line) => {
-                if line.starts_with("---") && line.trim().chars().all(|c| c == '-') {
-                    return Some(RawLine::Divider);
+                match line_type {
+                    LineType::Blank => Some(Line::Blank),
+                    LineType::Divider => Some(Line::Divider),
+                    LineType::Text => Some(Line::Text(line)),
+                    LineType::Decorator => Some(parse_decorator(&line)),
+                    LineType::Heading1 => parse_starter!(line, constants::HEADING1_TOKEN, Heading1),
+                    LineType::Heading2 => parse_starter!(line, constants::HEADING2_TOKEN, Heading2),
+                    LineType::Heading3 => parse_starter!(line, constants::HEADING3_TOKEN, Heading3),
+                    LineType::Quote => parse_starter!(line, constants::QUOTE_TOKEN, Quote),
+                    LineType::UnorderedList => {
+                        parse_starter!(line, constants::UNORDERED_LIST_TOKEN, UnorderedList)
+                    }
+                    LineType::OrderedList => {
+                        parse_starter!(line, constants::ORDERED_LIST_TOKEN, OrderedList)
+                    }
                 }
-
-                Some(RawLine::Text(line))
             }
         }
     }
 
+    pub fn consume_raw(&mut self) -> Option<String> {
+        self.lines.pop_front()
+    }
+
     pub fn consume_line(&mut self) -> Option<Line> {
-        match self.consume_raw_line() {
+        match self.peek() {
             None => None,
-            Some(RawLine::Divider) => Some(Line::Divider),
-            Some(RawLine::Text(line)) => {
-                if line.chars().all(char::is_whitespace) {
-                    return Some(Line::Blank);
-                }
-
-                use super::constants;
-
-                parse_line_starter!(line, constants::HEADING1_TOKEN, Heading1);
-                parse_line_starter!(line, constants::HEADING2_TOKEN, Heading2);
-                parse_line_starter!(line, constants::HEADING3_TOKEN, Heading3);
-                parse_line_starter!(line, constants::QUOTE_TOKEN, Quote);
-                parse_line_starter!(line, constants::UNORDERED_LIST_TOKEN, UnorderedList);
-                parse_line_starter!(line, constants::ORDERED_LIST_TOKEN, OrderedList);
-
-                if is_annotation(&line) {
-                    return Some(parse_annotation(&line));
-                }
-
-                Some(Line::Text(line))
-            }
+            Some(line_type) => self.consume(line_type),
         }
     }
 }
