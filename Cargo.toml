@@ -4,6 +4,9 @@ version = "0.0.0"
 authors = ["Ruben Schmidmeister <ruben.schmidmeister@icloud.com>"]
 description = "Simple and lightweight markup language"
 license = "MIT"
+documentation = "https://docs.rs/ink"
+homepage = "https://github.com/bash/ink"
+repository = "https://github.com/bash/ink"
 readme = "README.md"
 
 [dependencies]
