@@ -1,4 +1,4 @@
-use super::block_tokenizer::{BlockTokenizer, Line, LineType};
+use super::block_tokenizer::{BlockTokenizer, LineType};
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum HeadingLevel {
