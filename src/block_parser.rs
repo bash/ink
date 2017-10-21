@@ -36,7 +36,9 @@ pub struct BlockParser {
 }
 
 #[derive(Debug)]
-pub struct TextAccumulator {}
+pub struct TextAccumulator {
+    buffer: String,
+}
 
 impl BlockParser {
     pub fn new(tokenizer: BlockTokenizer) -> Self {
@@ -44,7 +46,21 @@ impl BlockParser {
     }
 
     fn parse_text(&mut self) -> Option<Block> {
-        None
+        let mut accumulator = TextAccumulator::new();
+
+        loop {
+            let next_type = self.tokenizer.peek();
+
+            if let Some(LineType::Text) = next_type {
+                let line = self.tokenizer.consume(next_type.unwrap()).unwrap();
+
+                accumulator.add(&line.value().unwrap());
+            } else {
+                break;
+            }
+        }
+
+        Some(Block::Text { content: accumulator.consume() })
     }
 }
 
@@ -63,6 +79,28 @@ impl Iterator for BlockParser {
     }
 }
 
+impl TextAccumulator {
+    pub fn new() -> Self {
+        TextAccumulator { buffer: String::new() }
+    }
+
+    ///
+    /// Adds a new line to the current accumulated text.
+    /// Todo: this should also take care of newlines with two spaces
+    ///
+    pub fn add(&mut self, line: &str) {
+        if self.buffer.len() > 0 {
+            self.buffer.push_str(" ");
+        }
+
+        self.buffer.push_str(line);
+    }
+
+    pub fn consume(self) -> String {
+        self.buffer
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -70,8 +108,13 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let mut parser = BlockParser::new(BlockTokenizer::new("foo bar"));
+        let mut parser = BlockParser::new(BlockTokenizer::new("Lorem ipsum\ndolor sit amet"));
 
-        assert_eq!(Some(Block::Text { content: "foo bar".to_string() }), parser.next());
+        assert_eq!(
+            Some(Block::Text {
+                content: "Lorem ipsum dolor sit amet".to_string(),
+            }),
+            parser.next()
+        );
     }
 }

@@ -77,6 +77,10 @@ fn is_divider(line: &str) -> bool {
     line.starts_with("---") && line.trim().chars().all(|c| c == '-')
 }
 
+pub fn is_blank(line: &str) -> bool {
+    line.chars().all(char::is_whitespace)
+}
+
 fn get_line_type(line: &str) -> LineType {
     if is_divider(line) {
         return LineType::Divider;
@@ -86,7 +90,7 @@ fn get_line_type(line: &str) -> LineType {
         return LineType::Decorator;
     }
 
-    if line.chars().all(char::is_whitespace) {
+    if is_blank(line) {
         return LineType::Blank;
     }
 
@@ -98,6 +102,23 @@ fn get_line_type(line: &str) -> LineType {
     detect_line_starter!(line, constants::ORDERED_LIST_TOKEN, OrderedList);
 
     LineType::Text
+}
+
+impl Line {
+    pub fn value(self) -> Option<String> {
+        match self {
+            Line::Blank => None,
+            Line::Divider => None,
+            Line::Heading1(value) => Some(value),
+            Line::Heading2(value) => Some(value),
+            Line::Heading3(value) => Some(value),
+            Line::Text(value) => Some(value),
+            Line::Quote(value) => Some(value),
+            Line::Decorator(value) => Some(value),
+            Line::UnorderedList(value) => Some(value),
+            Line::OrderedList(value) => Some(value),
+        }
+    }
 }
 
 impl BlockTokenizer {
