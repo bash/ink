@@ -51,12 +51,6 @@ pub enum LineType {
     OrderedList,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum RawLine {
-    Divider,
-    Text(String),
-}
-
 #[derive(Debug)]
 pub struct BlockTokenizer {
     lines: VecDeque<String>,
