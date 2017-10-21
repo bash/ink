@@ -9,6 +9,9 @@ homepage = "https://github.com/bash/ink"
 repository = "https://github.com/bash/ink"
 readme = "README.md"
 
+[[example]]
+name = "main"
+
 [dependencies]
 
 [badges]
