@@ -10,7 +10,7 @@ fn main() {
 
     file.read_to_string(&mut input).unwrap();
 
-    let mut parser = BlockParser::new(input);
+    let parser = BlockParser::new(input);
 
     for block in parser {
         println!("{:?}", block);
