@@ -157,6 +157,7 @@ impl BlockTokenizer {
         self.lines.pop_front()
     }
 
+    #[cfg(test)]
     pub fn consume_line(&mut self) -> Option<Line> {
         match self.peek() {
             None => None,
