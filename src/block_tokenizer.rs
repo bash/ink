@@ -37,7 +37,7 @@ pub enum Line {
     OrderedList(String),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum LineType {
     Blank,
     Divider,
