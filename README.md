@@ -8,3 +8,5 @@
 
 Simple markup language inspired by popular markup languages (Markdown, Asciidoc, etc.)  
 Sucessor of [timetabio/Ink](https://github.com/timetabio/Ink).
+
+🔏 *Be carefull to not spill it!*
