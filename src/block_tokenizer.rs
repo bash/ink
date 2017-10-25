@@ -1,14 +1,54 @@
-use std::collections::VecDeque;
+use std::iter::Peekable;
+use std::str::Lines;
+use std::error::Error;
+use std::marker;
 use super::constants;
+use super::err::ParseError;
+
+pub type IterItem<'a> = Result<&'a str, ParseError>;
+
+pub trait IntoIterItem<'a> {
+    fn into_iter_item(self) -> IterItem<'a>;
+    fn into_iter_item_ref(&self) -> IterItem<'a>;
+}
+
+impl<'a, E> IntoIterItem<'a> for Result<&'a str, E>
+where
+    E: Error + Clone + 'static,
+{
+    fn into_iter_item(self) -> IterItem<'a> {
+        match self {
+            Ok(value) => Ok(value),
+            Err(err) => Err(ParseError::InputError(Box::new(err))),
+        }
+    }
+
+    fn into_iter_item_ref(&self) -> IterItem<'a> {
+        match self {
+            &Ok(value) => Ok(value),
+            &Err(ref err) => Err(ParseError::InputError(Box::new(err.clone()))),
+        }
+    }
+}
+
+impl<'a> IntoIterItem<'a> for &'a str {
+    fn into_iter_item(self) -> IterItem<'a> {
+        Ok(self)
+    }
+
+    fn into_iter_item_ref(&self) -> IterItem<'a> {
+        Ok(self)
+    }
+}
 
 macro_rules! parse_starter {
   ($line:expr, $starter:expr, $variant: ident) => {
     if $line.starts_with($starter) {
-        Some(Line::$variant(
+        Some(Ok(Line::$variant(
             $line.chars()
                 .skip($starter.len())
                 .collect()
-        ))
+        )))
     } else {
         None
     }
@@ -37,7 +77,7 @@ pub enum Line {
     OrderedList(String),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum LineType {
     Blank,
     Divider,
@@ -52,8 +92,13 @@ pub enum LineType {
 }
 
 #[derive(Debug)]
-pub struct BlockTokenizer {
-    lines: VecDeque<String>,
+pub struct BlockTokenizer<'a, A, I>
+where
+    A: IntoIterItem<'a>,
+    I: Iterator<Item = A>,
+{
+    inner: Peekable<I>,
+    _marker: marker::PhantomData<&'a ()>,
 }
 
 fn parse_decorator(line: &str) -> Line {
@@ -115,29 +160,39 @@ impl Line {
     }
 }
 
-impl BlockTokenizer {
-    pub fn new<S: Into<String>>(input: S) -> Self {
-        let lines = input.into().lines().map(|line| line.to_string()).collect();
+impl<'a, A, I> BlockTokenizer<'a, A, I>
+where
+    A: IntoIterItem<'a>,
+    I: Iterator<Item = A>,
+{
+    pub fn new(input: I) -> Self {
+        let inner = input.peekable();
 
-        BlockTokenizer { lines }
-    }
-
-    pub fn peek(&self) -> Option<LineType> {
-        match self.lines.get(0) {
-            None => None,
-            Some(line) => Some(get_line_type(line)),
+        BlockTokenizer {
+            inner,
+            _marker: marker::PhantomData,
         }
     }
 
-    pub fn consume(&mut self, line_type: LineType) -> Option<Line> {
-        match self.consume_raw() {
-            None => None,
-            Some(line) => {
+    pub fn from_string<'b>(input: &'b str) -> BlockTokenizer<'b, &'b str, Lines<'b>> {
+        BlockTokenizer::new(input.lines())
+    }
+
+    pub fn peek(&'a mut self) -> Option<Result<LineType, ParseError>> {
+        Some(self.inner.peek()?.into_iter_item_ref().map(|line| {
+            get_line_type(line)
+        }))
+    }
+
+    pub fn consume(&'a mut self, line_type: LineType) -> Option<Result<Line, ParseError>> {
+        match self.consume_raw()? {
+            Err(err) => Some(Err(err)),
+            Ok(line) => {
                 match line_type {
-                    LineType::Blank => Some(Line::Blank),
-                    LineType::Divider => Some(Line::Divider),
-                    LineType::Text => Some(Line::Text(line)),
-                    LineType::Decorator => Some(parse_decorator(&line)),
+                    LineType::Blank => Some(Ok(Line::Blank)),
+                    LineType::Divider => Some(Ok(Line::Divider)),
+                    LineType::Text => Some(Ok(Line::Text(line.to_string()))),
+                    LineType::Decorator => Some(Ok(parse_decorator(line))),
                     LineType::Heading1 => parse_starter!(line, constants::HEADING1_TOKEN, Heading1),
                     LineType::Heading2 => parse_starter!(line, constants::HEADING2_TOKEN, Heading2),
                     LineType::Heading3 => parse_starter!(line, constants::HEADING3_TOKEN, Heading3),
@@ -153,15 +208,19 @@ impl BlockTokenizer {
         }
     }
 
-    pub fn consume_raw(&mut self) -> Option<String> {
-        self.lines.pop_front()
+    pub fn consume_raw(&'a mut self) -> Option<IterItem<'a>> {
+        Some(self.inner.next()?.into_iter_item())
     }
 
-    pub fn consume_line(&mut self) -> Option<Line> {
-        match self.peek() {
-            None => None,
-            Some(line_type) => self.consume(line_type),
-        }
+    pub fn consume_line(&'a mut self) -> Option<Result<Line, ParseError>> {
+        let line_type = self.peek()?;
+
+        let result = match line_type {
+            Ok(line_type) => self.consume(line_type)?,
+            Err(err) => Err(err),
+        };
+
+        Some(result)
     }
 }
 
@@ -171,15 +230,21 @@ mod tests {
 
     #[test]
     fn text_works() {
-        let mut tokenizer = BlockTokenizer::new("hello\nworld");
+        let mut tokenizer = BlockTokenizer::from_string("hello\nworld");
 
-        assert_eq!(tokenizer.consume_line(), Some(Line::Text("hello".into())));
-        assert_eq!(tokenizer.consume_line(), Some(Line::Text("world".into())));
+        assert_eq!(
+            tokenizer.consume_line().unwrap(),
+            Some(Line::Text("hello".into()))
+        );
+        assert_eq!(
+            tokenizer.consume_line().unwrap(),
+            Some(Line::Text("world".into()))
+        );
     }
 
     #[test]
     fn heading_1_works() {
-        let mut tokenizer = BlockTokenizer::new("# hello\nworld");
+        let mut tokenizer = BlockTokenizer::from_string("# hello\nworld");
 
         assert_eq!(
             tokenizer.consume_line(),
@@ -190,7 +255,7 @@ mod tests {
 
     #[test]
     fn heading_2_works() {
-        let mut tokenizer = BlockTokenizer::new("## heading 2");
+        let mut tokenizer = BlockTokenizer::from_string("## heading 2");
 
         assert_eq!(
             tokenizer.consume_line(),
@@ -200,7 +265,7 @@ mod tests {
 
     #[test]
     fn heading_3_works() {
-        let mut tokenizer = BlockTokenizer::new("### lorem ipsum");
+        let mut tokenizer = BlockTokenizer::from_string("### lorem ipsum");
 
         assert_eq!(
             tokenizer.consume_line(),
@@ -210,7 +275,7 @@ mod tests {
 
     #[test]
     fn text_with_hash_works() {
-        let mut tokenizer = BlockTokenizer::new(" # lorem ipsum");
+        let mut tokenizer = BlockTokenizer::from_string(" # lorem ipsum");
 
         assert_eq!(
             tokenizer.consume_line(),
@@ -220,7 +285,7 @@ mod tests {
 
     #[test]
     fn quote_works() {
-        let mut tokenizer = BlockTokenizer::new("> quote\n > quote\n>quote");
+        let mut tokenizer = BlockTokenizer::from_string("> quote\n > quote\n>quote");
 
         assert_eq!(tokenizer.consume_line(), Some(Line::Quote("quote".into())));
         assert_eq!(
@@ -232,7 +297,8 @@ mod tests {
 
     #[test]
     fn decorator_works() {
-        let mut tokenizer = BlockTokenizer::new("[code]\n[code]   \n [code] \n  [code]  \n[code");
+        let mut tokenizer =
+            BlockTokenizer::from_string("[code]\n[code]   \n [code] \n  [code]  \n[code");
 
         assert_eq!(
             tokenizer.consume_line(),
@@ -255,7 +321,7 @@ mod tests {
 
     #[test]
     fn unordered_list_works() {
-        let mut tokenizer = BlockTokenizer::new("- item\n - item\n-item");
+        let mut tokenizer = BlockTokenizer::from_string("- item\n - item\n-item");
 
         assert_eq!(
             tokenizer.consume_line(),
@@ -267,7 +333,7 @@ mod tests {
 
     #[test]
     fn ordered_list_works() {
-        let mut tokenizer = BlockTokenizer::new(".  item\n . item\n.item");
+        let mut tokenizer = BlockTokenizer::from_string(".  item\n . item\n.item");
 
         assert_eq!(
             tokenizer.consume_line(),
@@ -279,7 +345,7 @@ mod tests {
 
     #[test]
     fn divider_works() {
-        let mut tokenizer = BlockTokenizer::new("---\n------- \n--\n ---\n---foobar");
+        let mut tokenizer = BlockTokenizer::from_string("---\n------- \n--\n ---\n---foobar");
 
         assert_eq!(tokenizer.consume_line(), Some(Line::Divider));
         assert_eq!(tokenizer.consume_line(), Some(Line::Divider));
@@ -293,7 +359,7 @@ mod tests {
 
     #[test]
     fn empty_works() {
-        let mut tokenizer = BlockTokenizer::new("   \t");
+        let mut tokenizer = BlockTokenizer::from_string("   \t");
 
         assert_eq!(tokenizer.consume_line(), Some(Line::Blank));
     }
