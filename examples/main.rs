@@ -1,6 +1,6 @@
-extern crate ink;
+extern crate squid;
 
-use ink::BlockParser;
+use squid::BlockParser;
 use std::fs::File;
 use std::io::Read;
 
