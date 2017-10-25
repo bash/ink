@@ -4,4 +4,4 @@ mod constants;
 mod tokens;
 pub mod ast;
 
-pub use block_parser::{BlockParser};
+pub use block_parser::BlockParser;
