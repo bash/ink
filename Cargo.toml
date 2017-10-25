@@ -1,20 +1,17 @@
 [package]
-name = "ink"
+name = "squid"
 version = "0.0.0"
-authors = ["Ruben Schmidmeister <ruben.schmidmeister@icloud.com>"]
-description = "Simple and lightweight markup language"
+authors = ["Ruben Schmidmeister <ruben.schmidmeister@icloud.com>, Jan Nils Ferner <jn_ferner@hotmail.de>"]
+description = "🦑 Lightweight & Simple Markup Language"
 license = "MIT"
-documentation = "https://docs.rs/ink"
-homepage = "https://github.com/bash/ink"
-repository = "https://github.com/bash/ink"
-readme = "README.md"
-
-[[example]]
-name = "main"
-
-[dependencies]
+documentation = "https://docs.rs/squid"
+homepage = "https://github.com/squid-lang/squid"
+repository = "https://github.com/squid-lang/squid"
+readme = "readme.md"
 
 [badges]
-travis-ci = { repository = "bash/ink", branch = "master" }
-codecov = { repository = "bash/ink", branch = "master", service = "github" }
+travis-ci = { repository = "squid-lang/squid", branch = "master" }
+codecov = { repository = "squid-lang/squid", branch = "master", service = "github" }
 maintenance = { status = "experimental" }
+
+[dependencies]
