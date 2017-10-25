@@ -1,7 +1,9 @@
 sudo: false
 dist: trusty
 language: rust
-cache: cargo
+cache:
+  directories:
+    - $HOME/.cargo
 
 rust:
   - nightly
