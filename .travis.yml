@@ -1,12 +1,16 @@
 sudo: false
 dist: trusty
 language: rust
+
 cache:
   directories:
     - $HOME/.cargo
 
 rust:
   - nightly
+
+notifications:
+  email: false
 
 env:
   global:
@@ -40,7 +44,7 @@ script:
 
 
 after_success: |
-  wget https://rschmidmeister.nyc3.digitaloceanspaces.com/kcov.tar.gz &&
+  wget -O kcov.tar.gz https://rschmidmeister.nyc3.digitaloceanspaces.com/binaries/kcov/kcov-x86_64-gnu-linux.tar.gz &&
   mkdir kcov &&
   tar -xzf kcov.tar.gz -C ./kcov &&
   for file in target/debug/ink-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; ./kcov/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
