@@ -1,4 +1,6 @@
 use super::block_tokenizer::{BlockTokenizer, LineType};
+use std::str::Lines;
+use std::error::Error;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum HeadingLevel {
@@ -30,10 +32,13 @@ pub enum Block {
         items: Vec<String>,
     },
 }
-
+/*
 #[derive(Debug)]
-pub struct BlockParser {
-    tokenizer: BlockTokenizer,
+pub struct BlockParser<'a, I>
+where
+    I: Iterator<Item = &'a str>,
+{
+    tokenizer: BlockTokenizer<'a, I>,
 }
 
 #[derive(Debug)]
@@ -41,9 +46,16 @@ pub struct TextAccumulator {
     buffer: String,
 }
 
-impl BlockParser {
-    pub fn new<S: Into<String>>(input: S) -> Self {
+impl<'a, I> BlockParser<'a, I>
+where
+    I: Iterator<Item = &'a str>,
+{
+    pub fn new<S: IntoIterator<Item = &'a str, IntoIter = I>>(input: S) -> Self {
         BlockParser { tokenizer: BlockTokenizer::new(input) }
+    }
+
+    pub fn from_string<'b>(input: &'b str) -> BlockParser<'b, Lines<'b>> {
+        BlockParser { tokenizer: BlockTokenizer::<'b, Lines<'b>>::from_string(input) }
     }
 
     fn parse_text(&mut self) -> Option<Block> {
@@ -115,7 +127,10 @@ impl BlockParser {
     }
 }
 
-impl Iterator for BlockParser {
+impl<'a, I> Iterator for BlockParser<'a, I>
+where
+    I: Iterator<Item = &'a str>,
+{
     type Item = Block;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -164,7 +179,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let mut parser = BlockParser::new("Lorem ipsum\ndolor sit amet");
+        let mut parser = BlockParser::from_string("Lorem ipsum\ndolor sit amet");
 
         assert_eq!(
             Some(Block::Text {
@@ -176,7 +191,7 @@ mod tests {
 
     #[test]
     fn parsing_headings_works() {
-        let parser = BlockParser::new("# hello world\n##    level 2\n### three");
+        let parser = BlockParser::from_string("# hello world\n##    level 2\n### three");
 
         assert_eq!(
             vec![
@@ -199,7 +214,7 @@ mod tests {
 
     #[test]
     fn parsing_lists_work() {
-        let parser = BlockParser::new(
+        let parser = BlockParser::from_string(
             r#"
 . uno
 . due
@@ -225,3 +240,4 @@ mod tests {
         );
     }
 }
+*/
