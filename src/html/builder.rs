@@ -39,7 +39,6 @@ impl<'a> Builder<'a> {
         Output { nodes: self.nodes }
     }
 
-    /// TODO: Text type needs to be changed to &'a str
     pub fn tag_with_text(&mut self, name: &'a str, text: String) {
         self.nodes.push(Node::Tag {
             name,

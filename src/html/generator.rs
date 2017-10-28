@@ -8,13 +8,10 @@ use super::builder::{Builder, Output};
 ///
 /// ```
 /// use squid::html::{Generator, DefaultFormat};
-/// use squid::ast::{Block, HeadingLevel};
+/// use squid::ast::{Block, Heading, HeadingLevel, BlockInner};
 ///
 /// let blocks = vec![
-///     Ok(Block::Heading {
-///         level: HeadingLevel::Level1,
-///         content: "Hello World".to_string(),
-///     }),
+///     Ok(Heading::new(HeadingLevel::Level1, "Hello World".into()).wrap()),
 /// ];
 ///
 /// let mut generator = Generator::new(&DefaultFormat, blocks.into_iter());
@@ -66,9 +63,7 @@ where
             let mut builder = Builder::new();
 
             match block {
-                Block::Heading { level, content } => {
-                    self.format.heading(&mut builder, level, content)
-                }
+                Block::Heading(inner) => self.format.heading(&mut builder, inner),
                 _ => unimplemented!(),
             }
 

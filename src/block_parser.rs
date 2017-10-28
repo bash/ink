@@ -1,6 +1,6 @@
 use super::block_tokenizer::BlockTokenizer;
 use super::tokens::LineType;
-use super::ast::{Block, HeadingLevel};
+use super::ast::{Block, Heading, HeadingLevel};
 
 #[derive(Debug)]
 pub struct BlockParser {
@@ -63,7 +63,7 @@ impl BlockParser {
 
         let content = self.tokenizer.consume(line_type)?.value()?.trim().into();
 
-        Some(Block::Heading { content, level })
+        Some(Block::from_inner(Heading::new(level, content)))
     }
 }
 
@@ -132,18 +132,16 @@ mod tests {
         let mut parser = BlockParser::new("# hello world\n##    level 2\n### three");
 
         assert_eq!(
-            Some(Block::Heading {
-                content: "hello world".into(),
-                level: HeadingLevel::Level1,
-            }),
+            Some(Block::from_inner(
+                Heading::new(HeadingLevel::Level1, "hello world".into()),
+            )),
             parser.next()
         );
 
         assert_eq!(
-            Some(Block::Heading {
-                content: "level 2".into(),
-                level: HeadingLevel::Level2,
-            }),
+            Some(Block::from_inner(
+                Heading::new(HeadingLevel::Level2, "level 2".into()),
+            )),
             parser.next()
         );
     }
