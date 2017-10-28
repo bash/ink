@@ -42,6 +42,9 @@ mod tests {
             "hello world".to_string(),
         );
 
-        assert_eq!("<h1>hello world</h1>", format!("{}", builder.consume()));
+        format.heading(&mut builder, HeadingLevel::Level2, "level 2".to_string());
+        format.heading(&mut builder, HeadingLevel::Level3, "level 3".to_string());
+
+        assert_eq!("<h1>hello world</h1><h2>level 2</h2><h3>level 3</h3>", format!("{}", builder.consume()));
     }
 }
