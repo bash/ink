@@ -40,7 +40,7 @@ impl<'a> Builder<'a> {
     }
 
     /// TODO: Text type needs to be changed to &'a str
-    pub fn text_tag(&mut self, name: &'a str, text: String) {
+    pub fn tag_with_text(&mut self, name: &'a str, text: String) {
         self.nodes.push(Node::Tag {
             name,
             children: vec![Node::Text { text }],
