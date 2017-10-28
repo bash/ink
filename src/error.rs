@@ -37,3 +37,25 @@ impl Error for ParseError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io;
+
+    #[test]
+    fn description_works() {
+        let err = ParseError::from_error(io::Error::from(io::ErrorKind::BrokenPipe));
+        let io_err = io::Error::from(io::ErrorKind::BrokenPipe);
+
+        assert_eq!(err.description(), io_err.description());
+    }
+
+    #[test]
+    fn display_works() {
+        let err = ParseError::from_error(io::Error::from(io::ErrorKind::BrokenPipe));
+        let io_err = io::Error::from(io::ErrorKind::BrokenPipe);
+
+        assert_eq!(format!("{}", io_err), format!("{}", err));
+    }
+}
