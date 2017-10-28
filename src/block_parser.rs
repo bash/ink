@@ -1,6 +1,6 @@
 use super::block_tokenizer::BlockTokenizer;
 use super::tokens::LineType;
-use super::ast::{Block, HeadingLevel, ListType};
+use super::ast::{Block, HeadingLevel};
 
 #[derive(Debug)]
 pub struct BlockParser {
