@@ -7,7 +7,7 @@ use super::builder::{Builder, Output};
 /// # Example
 ///
 /// ```
-/// use squid::generator::html::{Generator, DefaultFormat};
+/// use squid::html::{Generator, DefaultFormat};
 /// use squid::ast::{Block, HeadingLevel};
 ///
 /// let blocks = vec![
