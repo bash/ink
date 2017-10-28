@@ -22,7 +22,7 @@ impl Format for DefaultFormat {
             HeadingLevel::__NonExhaustive => unreachable!(),
         };
 
-        builder.tag_with_text(tag, heading.content());
+        builder.tag(tag).add_text(heading.content()).finish();
     }
 }
 

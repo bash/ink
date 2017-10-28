@@ -26,6 +26,7 @@ use super::builder::{Builder, Output};
 /// <h1>hello world</h1>
 /// ```
 ///
+#[derive(Debug)]
 pub struct Generator<'a, 'b, F, I>
 where
     F: Format + 'static,
