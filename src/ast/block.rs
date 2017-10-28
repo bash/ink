@@ -3,6 +3,8 @@ pub enum HeadingLevel {
     Level1,
     Level2,
     Level3,
+    #[doc(hidden)]
+    __NonExhaustive,
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
