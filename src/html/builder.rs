@@ -1,46 +1,43 @@
 use std::fmt;
 use std::mem;
+use std::borrow::Cow;
 use super::escape::Escape;
 
 #[derive(Debug)]
 pub struct Builder<'a> {
-    nodes: Vec<Node<'a>>,
+    events: Vec<Event<'a>>,
 }
 
 #[derive(Debug)]
-pub struct TagBuilder<'a, 'b: 'a> {
-    name: &'b str,
+pub struct TagStartBuilder<'a, 'b: 'a> {
+    name: Cow<'b, str>,
     attrs: Vec<Attribute<'b>>,
-    children: Vec<Node<'b>>,
     builder: &'a mut Builder<'b>,
 }
 
 #[derive(Debug)]
 pub struct Output<'a> {
-    nodes: Vec<Node<'a>>,
+    events: Vec<Event<'a>>,
 }
 
-type Attribute<'a> = (&'a str, &'a str);
+type Attribute<'a> = (Cow<'a, str>, Cow<'a, str>);
 
-// We're not exposing `Node` directly which allows us
+// We're not exposing `Event` directly which allows us
 // to make changes to the representation without breaking api compatiblity
 // Consumers have to use the respective methods on a `Builder` instance instead.
 #[derive(Debug)]
-enum Node<'a> {
-    /// TODO: A tag needs to allow children
-    /// TODO: A tag needs attributes
-    Tag {
-        name: &'a str,
+pub enum Event<'a> {
+    TagStart {
+        name: Cow<'a, str>,
         attrs: Vec<Attribute<'a>>,
-        children: Vec<Node<'a>>,
     },
-    /// TODO: Change text type to &'a str
-    Text { text: String },
+    Text { text: Cow<'a, str> },
+    TagEnd { name: Cow<'a, str> },
 }
 
-fn format_nodes<'a>(f: &mut fmt::Formatter, nodes: &Vec<Node<'a>>) -> fmt::Result {
-    for node in nodes {
-        write!(f, "{}", node)?;
+fn format_events<'a>(f: &mut fmt::Formatter, events: &Vec<Event<'a>>) -> fmt::Result {
+    for event in events {
+        write!(f, "{}", event)?;
     }
 
     Ok(())
@@ -48,7 +45,7 @@ fn format_nodes<'a>(f: &mut fmt::Formatter, nodes: &Vec<Node<'a>>) -> fmt::Resul
 
 fn format_attrs<'a>(f: &mut fmt::Formatter, attrs: &Vec<Attribute<'a>>) -> fmt::Result {
     for attr in attrs {
-        write!(f, " {}=\"{}\"", attr.0, Escape(attr.1))?;
+        write!(f, " {}=\"{}\"", attr.0, Escape(&attr.1))?;
     }
 
     Ok(())
@@ -56,73 +53,91 @@ fn format_attrs<'a>(f: &mut fmt::Formatter, attrs: &Vec<Attribute<'a>>) -> fmt::
 
 impl<'a> Builder<'a> {
     pub(crate) fn new() -> Self {
-        Builder { nodes: Vec::new() }
+        Builder { events: Vec::new() }
     }
 
     pub(crate) fn consume(self) -> Output<'a> {
-        Output { nodes: self.nodes }
+        Output { events: self.events }
     }
 
-    pub fn tag<'b>(&'b mut self, name: &'a str) -> TagBuilder<'b, 'a> {
-        TagBuilder {
-            name,
+    pub fn tag_start<'b, N>(&'b mut self, name: N) -> TagStartBuilder<'b, 'a>
+    where
+        N: Into<Cow<'a, str>>,
+    {
+        TagStartBuilder {
+            name: name.into(),
             attrs: Vec::new(),
-            children: Vec::new(),
             builder: self,
         }
     }
+
+    pub fn text<T>(&mut self, text: T) -> &mut Self
+    where
+        T: Into<Cow<'a, str>>,
+    {
+        self.events.push(Event::Text { text: text.into() });
+
+        self
+    }
+
+    pub fn tag_end<T>(&mut self, name: T) -> &mut Self
+    where
+        T: Into<Cow<'a, str>>,
+    {
+        self.events.push(Event::TagEnd { name: name.into() });
+
+        self
+    }
+
+    fn append(&mut self, event: Event<'a>) {
+        self.events.push(event);
+    }
 }
 
-impl<'a> fmt::Display for Node<'a> {
+impl<'a> fmt::Display for Event<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            // TODO: escaping
-            &Node::Text { ref text } => write!(f, "{}", Escape(text)),
-            &Node::Tag {
-                name,
-                ref children,
+            &Event::Text { ref text } => write!(f, "{}", Escape(text)),
+            &Event::TagStart {
+                ref name,
                 ref attrs,
             } => {
                 write!(f, "<{}", name)
                     .and_then(|_| format_attrs(f, attrs))
                     .and_then(|_| write!(f, ">"))
-                    .and_then(|_| format_nodes(f, children))
-                    .and_then(|_| write!(f, "</{0}>", name))
             }
+            &Event::TagEnd { ref name } => write!(f, "</{}>", name),
         }
     }
 }
 
 impl<'a> fmt::Display for Output<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        format_nodes(f, &self.nodes)
+        format_events(f, &self.events)
     }
 }
 
-impl<'a, 'b> TagBuilder<'a, 'b> {
-    pub fn add_attr(&mut self, name: &'b str, value: &'b str) -> &mut TagBuilder<'a, 'b> {
-        self.attrs.push((name, value));
+impl<'a, 'b> TagStartBuilder<'a, 'b> {
+    pub fn add_attr<N, V>(&mut self, name: N, value: V) -> &mut Self
+    where
+        N: Into<Cow<'b, str>>,
+        V: Into<Cow<'b, str>>,
+    {
+        self.attrs.push((name.into(), value.into()));
 
         self
     }
 
-    pub fn add_text(&mut self, text: String) -> &mut TagBuilder<'a, 'b> {
-        self.children.push(Node::Text { text });
-
-        self
-    }
-
-    pub fn finish(&mut self) {
+    pub fn finish(&'a mut self) -> &'a mut Builder<'b> {
         let mut attrs = vec![];
-        let mut children = vec![];
 
         mem::swap(&mut self.attrs, &mut attrs);
-        mem::swap(&mut self.children, &mut children);
 
-        self.builder.nodes.push(Node::Tag {
+        self.builder.append(Event::TagStart {
             attrs,
-            name: self.name,
-            children,
-        })
+            name: self.name.clone(),
+        });
+
+        self.builder
     }
 }

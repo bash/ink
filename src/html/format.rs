@@ -1,5 +1,6 @@
 use super::builder::Builder;
 use ast::{Heading, HeadingLevel};
+use std::fmt::Debug;
 
 ///
 /// HTML generation might need to be customized to invividual use.
@@ -7,10 +8,11 @@ use ast::{Heading, HeadingLevel};
 /// TODO: I need some feedback on the name `Format`
 /// TODO: API is only a draft
 ///
-pub trait Format {
+pub trait Format: Debug {
     fn heading(&self, builder: &mut Builder, heading: Heading);
 }
 
+#[derive(Debug)]
 pub struct DefaultFormat;
 
 impl Format for DefaultFormat {
@@ -22,7 +24,11 @@ impl Format for DefaultFormat {
             HeadingLevel::__NonExhaustive => unreachable!(),
         };
 
-        builder.tag(tag).add_text(heading.content()).finish();
+        builder
+            .tag_start(tag)
+            .finish()
+            .text(heading.content())
+            .tag_end(tag);
     }
 }
 

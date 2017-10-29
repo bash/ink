@@ -1,20 +1,27 @@
 use ast::Block;
 use error::ParseError;
-use super::format::Format;
+use super::format::{Format, DefaultFormat};
 use super::builder::{Builder, Output};
+use std::ops;
+
+#[derive(Debug)]
+enum OwnedOrBorrowed<'a, T: 'a> {
+    Owned(T),
+    Borrowed(&'a T),
+}
 
 ///
 /// # Example
 ///
 /// ```
-/// use squid::html::{Generator, DefaultFormat};
-/// use squid::ast::{Block, Heading, HeadingLevel, BlockInner};
+/// use squid::html::Generator;
+/// use squid::ast::{Heading, HeadingLevel, BlockInner};
 ///
 /// let blocks = vec![
 ///     Ok(Heading::new(HeadingLevel::Level1, "Hello World".into()).wrap()),
 /// ];
 ///
-/// let mut generator = Generator::new(&DefaultFormat, blocks.into_iter());
+/// let mut generator = Generator::new(blocks.into_iter());
 ///
 /// for node in generator {
 ///     println!("{}", node.unwrap());
@@ -33,9 +40,37 @@ where
     // TODO: use own error type
     I: Iterator<Item = Result<Block, ParseError>>,
 {
-    format: &'a F,
+    // Not using Cow because Cow would require F to be `Clone`able
+    format: OwnedOrBorrowed<'a, F>,
     input: I,
     _marker: ::std::marker::PhantomData<&'b ()>,
+}
+
+impl<'a, T: 'a> ops::Deref for OwnedOrBorrowed<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        match self {
+            &OwnedOrBorrowed::Borrowed(val) => val,
+            &OwnedOrBorrowed::Owned(ref val) => &val,
+        }
+    }
+}
+
+impl<'a, 'b, I> Generator<'a, 'b, DefaultFormat, I>
+where
+    I: Iterator<Item = Result<Block, ParseError>>,
+{
+    ///
+    /// Creates a new generator with the default implementation of `Format`.
+    ///
+    pub fn new(input: I) -> Self {
+        Generator {
+            input,
+            format: OwnedOrBorrowed::Owned(DefaultFormat),
+            _marker: ::std::marker::PhantomData,
+        }
+    }
 }
 
 impl<'a, 'b, F, I> Generator<'a, 'b, F, I>
@@ -43,9 +78,9 @@ where
     F: Format + 'static,
     I: Iterator<Item = Result<Block, ParseError>>,
 {
-    pub fn new(format: &'a F, input: I) -> Self {
+    pub fn with_format(format: &'a F, input: I) -> Self {
         Generator {
-            format,
+            format: OwnedOrBorrowed::Borrowed(format),
             input,
             _marker: ::std::marker::PhantomData,
         }
