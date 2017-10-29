@@ -45,7 +45,7 @@ impl<'a> Builder<'a> {
     }
 
     pub(crate) fn consume(self) -> Output<'a> {
-        Output { events: self.events }
+        Output::new(self.events)
     }
 
     pub fn tag_start<'b, N>(&'b mut self, name: N) -> TagStartBuilder<'b, 'a>
