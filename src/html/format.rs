@@ -1,4 +1,4 @@
-use super::builder::Builder;
+use super::builders::Builder;
 use ast::{Heading, HeadingLevel};
 use std::fmt::Debug;
 

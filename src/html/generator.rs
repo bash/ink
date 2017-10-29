@@ -1,7 +1,8 @@
 use ast::Block;
 use error::ParseError;
 use super::format::{Format, DefaultFormat};
-use super::builder::{Builder, Output};
+use super::builders::Builder;
+use super::output::Output;
 use std::ops;
 
 #[derive(Debug)]

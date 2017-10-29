@@ -1,6 +1,7 @@
 use std::fmt;
 use std::mem;
 use std::borrow::Cow;
+use super::output::Output;
 use super::escape::Escape;
 
 #[derive(Debug)]
@@ -15,32 +16,19 @@ pub struct TagStartBuilder<'a, 'b: 'a> {
     builder: &'a mut Builder<'b>,
 }
 
-#[derive(Debug)]
-pub struct Output<'a> {
-    events: Vec<Event<'a>>,
-}
-
 type Attribute<'a> = (Cow<'a, str>, Cow<'a, str>);
 
 // We're not exposing `Event` directly which allows us
 // to make changes to the representation without breaking api compatiblity
 // Consumers have to use the respective methods on a `Builder` instance instead.
 #[derive(Debug)]
-pub enum Event<'a> {
+pub(crate) enum Event<'a> {
     TagStart {
         name: Cow<'a, str>,
         attrs: Vec<Attribute<'a>>,
     },
     Text { text: Cow<'a, str> },
     TagEnd { name: Cow<'a, str> },
-}
-
-fn format_events<'a>(f: &mut fmt::Formatter, events: &Vec<Event<'a>>) -> fmt::Result {
-    for event in events {
-        write!(f, "{}", event)?;
-    }
-
-    Ok(())
 }
 
 fn format_attrs<'a>(f: &mut fmt::Formatter, attrs: &Vec<Attribute<'a>>) -> fmt::Result {
@@ -108,12 +96,6 @@ impl<'a> fmt::Display for Event<'a> {
             }
             &Event::TagEnd { ref name } => write!(f, "</{}>", name),
         }
-    }
-}
-
-impl<'a> fmt::Display for Output<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        format_events(f, &self.events)
     }
 }
 
