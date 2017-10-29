@@ -52,7 +52,8 @@ mod tests {
         let err = ParseError::from_error(io::Error::from(io::ErrorKind::BrokenPipe));
         let io_err = io::Error::from(io::ErrorKind::BrokenPipe);
 
-        assert_eq!(err.description(), io_err.description());
+        assert_eq!(io_err.description(), err.description());
+        assert_eq!("", ParseError::PeekError.description());
     }
 
     #[test]
@@ -61,5 +62,6 @@ mod tests {
         let io_err = io::Error::from(io::ErrorKind::BrokenPipe);
 
         assert_eq!(format!("{}", io_err), format!("{}", err));
+        assert_eq!("".to_string(), format!("{}", ParseError::PeekError));
     }
 }
