@@ -82,7 +82,7 @@ where
             }
         }
 
-        Some(Ok(Block::Text { content: accumulator.consume() }))
+        Some(Ok(Block::Quote { content: accumulator.consume() }))
     }
 
     fn parse_heading(&mut self, line_type: LineType) -> Option<Result<Block, ParseError>> {
@@ -146,7 +146,7 @@ impl TextAccumulator {
             self.buffer.push_str(" ");
         }
 
-        self.buffer.push_str(line);
+        self.buffer.push_str(line.trim());
     }
 
     pub fn consume(self) -> String {
@@ -185,6 +185,26 @@ mod tests {
 
         assert_eq!(
             Block::from_inner(Heading::new(HeadingLevel::Level2, "level 2".into())),
+            unwrap!(parser.next())
+        );
+    }
+
+    #[test]
+    fn parsing_quote_works() {
+        let mut parser = BlockParser::from_string("> Foo\n> bar baz");
+
+        assert_eq!(
+            Block::Quote { content: "Foo bar baz".into() },
+            unwrap!(parser.next())
+        );
+    }
+
+    #[test]
+    fn parsing_text_works() {
+        let mut parser = BlockParser::from_string("Foo\n    \tbar baz");
+
+        assert_eq!(
+            Block::Text { content: "Foo bar baz".into() },
             unwrap!(parser.next())
         );
     }
