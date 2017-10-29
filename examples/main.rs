@@ -3,14 +3,12 @@ extern crate squid;
 use squid::BlockParser;
 use std::fs::File;
 use std::io::Read;
+use std::io::{BufRead, BufReader};
 
 fn main() {
-    let mut file = File::open("examples/demo.sq").unwrap();
-    let mut input = String::new();
-
-    file.read_to_string(&mut input).unwrap();
-
-    let parser = BlockParser::new(input);
+    let file = File::open("examples/demo.sq").unwrap();
+    let reader = BufReader::new(&file);
+    let mut parser = BlockParser::new(reader.lines());
 
     for block in parser {
         println!("{:?}", block);

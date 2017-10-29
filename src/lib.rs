@@ -8,3 +8,4 @@ pub mod error;
 pub mod html;
 
 pub use block_parser::BlockParser;
+pub use block_tokenizer::BlockTokenizer;

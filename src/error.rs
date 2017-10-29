@@ -3,6 +3,7 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum ParseError {
+    PeekError,
     /// Wraps any errors that might arise from the input
     InputError(Box<Error>),
 }
@@ -20,6 +21,7 @@ impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &ParseError::InputError(ref err) => write!(f, "{}", err),
+            &ParseError::PeekError => Ok(()),
         }
     }
 }
@@ -28,12 +30,14 @@ impl Error for ParseError {
     fn description(&self) -> &str {
         match self {
             &ParseError::InputError(ref err) => err.description(),
+            &ParseError::PeekError => "",
         }
     }
 
     fn cause(&self) -> Option<&Error> {
         match self {
             &ParseError::InputError(ref err) => Some(err.as_ref()),
+            _ => None,
         }
     }
 }
