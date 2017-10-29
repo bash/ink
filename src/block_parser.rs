@@ -90,7 +90,7 @@ where
             LineType::Heading1 => HeadingLevel::Level1,
             LineType::Heading2 => HeadingLevel::Level2,
             LineType::Heading3 => HeadingLevel::Level3,
-            _ => return None,
+            _ => unreachable!(),
         };
 
         match self.tokenizer.consume(line_type)? {
