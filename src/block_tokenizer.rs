@@ -129,6 +129,7 @@ where
         self.input.next()
     }
 
+    #[allow(dead_code)]
     pub fn consume_line(&mut self) -> Option<Result<Line<'a>, ParseError>> {
         let result = match self.peek()? {
             Err(err) => Err(err),
