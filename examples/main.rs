@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::Read;
 
 fn main() {
-    let mut file = File::open("demo.sq").unwrap();
+    let mut file = File::open("examples/demo.sq").unwrap();
     let mut input = String::new();
 
     file.read_to_string(&mut input).unwrap();
