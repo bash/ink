@@ -187,6 +187,11 @@ mod tests {
             Block::from_inner(Heading::new(HeadingLevel::Level2, "level 2".into())),
             unwrap!(parser.next())
         );
+
+        assert_eq!(
+            Block::from_inner(Heading::new(HeadingLevel::Level3, "three".into())),
+            unwrap!(parser.next())
+        );
     }
 
     #[test]
@@ -205,6 +210,16 @@ mod tests {
 
         assert_eq!(
             Block::Text { content: "Foo bar baz".into() },
+            unwrap!(parser.next())
+        );
+    }
+
+    #[test]
+    fn blank_lines_are_ignored() {
+        let mut parser = BlockParser::from_string("   \n \t \nfoo");
+
+        assert_eq!(
+            Block::Text { content: "foo".into() },
             unwrap!(parser.next())
         );
     }
