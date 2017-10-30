@@ -2,7 +2,7 @@ extern crate squid;
 
 use squid::BlockParser;
 use squid::ast::{Heading, HeadingLevel};
-use squid::html::{Generator, Format};
+use squid::html::{Renderer, Format};
 use squid::html::builders::Builder;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -31,9 +31,9 @@ fn main() {
     let file = File::open("examples/demo.sq").unwrap();
     let reader = BufReader::new(&file);
     let parser = BlockParser::new(reader.lines());
-    let generator = Generator::with_format(&CustomFormat, parser);
+    let renderer = Renderer::with_format(&CustomFormat, parser);
 
-    for block in generator.take(3) {
+    for block in renderer.take(3) {
         println!("{}", block.unwrap());
     }
 }

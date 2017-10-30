@@ -15,16 +15,16 @@ enum OwnedOrBorrowed<'a, T: 'a> {
 /// # Example
 ///
 /// ```
-/// use squid::html::Generator;
+/// use squid::html::Renderer;
 /// use squid::ast::{Heading, HeadingLevel, BlockInner};
 ///
 /// let blocks = vec![
 ///     Ok(Heading::new(HeadingLevel::Level1, "Hello World".into()).wrap()),
 /// ];
 ///
-/// let mut generator = Generator::new(blocks.into_iter());
+/// let mut renderer = Renderer::new(blocks.into_iter());
 ///
-/// for node in generator {
+/// for node in renderer {
 ///     println!("{}", node.unwrap());
 /// }
 /// ```
@@ -35,7 +35,7 @@ enum OwnedOrBorrowed<'a, T: 'a> {
 /// ```
 ///
 #[derive(Debug)]
-pub struct Generator<'a, 'b, F, I>
+pub struct Renderer<'a, 'b, F, I>
 where
     F: Format + 'static,
     // TODO: use own error type
@@ -58,15 +58,15 @@ impl<'a, T: 'a> ops::Deref for OwnedOrBorrowed<'a, T> {
     }
 }
 
-impl<'a, 'b, I> Generator<'a, 'b, DefaultFormat, I>
+impl<'a, 'b, I> Renderer<'a, 'b, DefaultFormat, I>
 where
     I: Iterator<Item = Result<Block, ParseError>>,
 {
     ///
-    /// Creates a new generator with the default implementation of `Format`.
+    /// Creates a new renderer with the default implementation of `Format`.
     ///
     pub fn new(input: I) -> Self {
-        Generator {
+        Renderer {
             input,
             format: OwnedOrBorrowed::Owned(DefaultFormat),
             _marker: ::std::marker::PhantomData,
@@ -74,13 +74,13 @@ where
     }
 }
 
-impl<'a, 'b, F, I> Generator<'a, 'b, F, I>
+impl<'a, 'b, F, I> Renderer<'a, 'b, F, I>
 where
     F: Format + 'static,
     I: Iterator<Item = Result<Block, ParseError>>,
 {
     pub fn with_format(format: &'a F, input: I) -> Self {
-        Generator {
+        Renderer {
             format: OwnedOrBorrowed::Borrowed(format),
             input,
             _marker: ::std::marker::PhantomData,
@@ -88,7 +88,7 @@ where
     }
 }
 
-impl<'a, 'b, F, I> Iterator for Generator<'a, 'b, F, I>
+impl<'a, 'b, F, I> Iterator for Renderer<'a, 'b, F, I>
 where
     F: Format + 'static,
     I: Iterator<Item = Result<Block, ParseError>>,

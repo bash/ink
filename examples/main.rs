@@ -1,7 +1,7 @@
 extern crate squid;
 
 use squid::BlockParser;
-use squid::html::Generator;
+use squid::html::Renderer;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -9,9 +9,9 @@ fn main() {
     let file = File::open("examples/demo.sq").unwrap();
     let reader = BufReader::new(&file);
     let parser = BlockParser::new(reader.lines());
-    let generator = Generator::new(parser);
+    let renderer = Renderer::new(parser);
 
-    for block in generator.take(3) {
+    for block in renderer.take(3) {
         println!("{}", block.unwrap());
     }
 }
