@@ -1,5 +1,5 @@
 use super::builders::Builder;
-use super::super::ast::{HeadingLevel, Text, Inline};
+use super::super::ast::{HeadingLevel, Text, Inline, ListType};
 use std::fmt::Debug;
 
 ///
@@ -24,6 +24,31 @@ pub trait Format: Debug {
         self.text(builder, text);
 
         builder.tag_end("p");
+    }
+
+    fn quote(&self, builder: &mut Builder, text: Text) {
+        builder.tag_start("blockquote").finish();
+
+        self.text(builder, text);
+
+        builder.tag_end("blockquote");
+    }
+
+    fn list(&self, builder: &mut Builder, list_type: ListType, items: Vec<Text>) {
+        let tag = match list_type {
+            ListType::Unordered => "ul",
+            ListType::Ordered => "ol",
+        };
+
+        builder.tag_start(tag);
+
+        for item in items {
+            builder.tag_start("li").finish();
+            self.text(builder, item);
+            builder.tag_end("li");
+        }
+
+        builder.tag_end(tag);
     }
 
     fn text(&self, builder: &mut Builder, text: Text) {

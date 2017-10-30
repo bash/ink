@@ -98,6 +98,8 @@ where
             match block {
                 Block::Heading(level, content) => self.format.heading(&mut builder, level, content),
                 Block::Paragraph(text) => self.format.paragraph(&mut builder, text),
+                Block::Quote(text) => self.format.quote(&mut builder, text),
+                Block::List(list_type, items) => self.format.list(&mut builder, list_type, items),
                 _ => unimplemented!(),
             }
 
