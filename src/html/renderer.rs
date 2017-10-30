@@ -38,7 +38,6 @@ enum OwnedOrBorrowed<'a, T: 'a> {
 pub struct Renderer<'a, F, I>
 where
     F: Format + 'static,
-    // TODO: use own error type
     I: Iterator<Item = Result<Block, ParseError>>,
 {
     // Not using Cow because Cow would require F to be `Clone`able

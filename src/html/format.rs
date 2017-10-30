@@ -6,7 +6,6 @@ use std::fmt::Debug;
 /// HTML generation might need to be customized to invividual use.
 /// A `Format` allows to customize output generation (e.g. custom tags, classes, ...)
 ///
-// TODO: I need some feedback on the name `Format`
 pub trait Format: Debug {
     fn heading(&self, builder: &mut Builder, level: HeadingLevel, content: String) {
         let tag = match level {

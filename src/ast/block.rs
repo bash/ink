@@ -18,7 +18,6 @@ pub enum ListType {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-// TODO: needs to be properly defined
 pub struct Decorator;
 
 #[derive(Debug, Eq, PartialEq)]

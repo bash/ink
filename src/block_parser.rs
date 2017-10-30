@@ -147,7 +147,6 @@ impl TextAccumulator {
     }
 
     pub fn consume(self) -> Text {
-        // TODO: only temporary until we implement inline parsing
         vec![Inline::Chunk(self.buffer)]
     }
 }
