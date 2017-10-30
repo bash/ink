@@ -8,27 +8,25 @@ use std::fmt::Debug;
 /// TODO: I need some feedback on the name `Format`
 /// TODO: API is only a draft
 ///
-pub trait Format: Debug {
-    fn heading(&self, builder: &mut Builder, heading: Heading);
+pub trait Format<'a>: Debug {
+    fn heading(&self, builder: &mut Builder<'a>, heading: Heading<'a>);
 }
 
 #[derive(Debug)]
 pub struct DefaultFormat;
 
-impl Format for DefaultFormat {
-    fn heading(&self, builder: &mut Builder, heading: Heading) {
-        let tag = match heading.level() {
+impl<'a> Format<'a> for DefaultFormat {
+    fn heading(&self, builder: &mut Builder<'a>, heading: Heading<'a>) {
+        let (level, content) = heading.consume();
+
+        let tag = match level {
             HeadingLevel::Level1 => "h1",
             HeadingLevel::Level2 => "h2",
             HeadingLevel::Level3 => "h3",
             HeadingLevel::__NonExhaustive => unreachable!(),
         };
 
-        builder
-            .tag_start(tag)
-            .finish()
-            .text(heading.content())
-            .tag_end(tag);
+        builder.tag_start(tag).finish().text(content).tag_end(tag);
     }
 }
 
@@ -44,18 +42,12 @@ mod tests {
 
         format.heading(
             &mut builder,
-            Heading::new(HeadingLevel::Level1, "hello world".to_string()),
+            Heading::new(HeadingLevel::Level1, "hello world"),
         );
 
-        format.heading(
-            &mut builder,
-            Heading::new(HeadingLevel::Level2, "level 2".into()),
-        );
+        format.heading(&mut builder, Heading::new(HeadingLevel::Level2, "level 2"));
 
-        format.heading(
-            &mut builder,
-            Heading::new(HeadingLevel::Level3, "level 3".into()),
-        );
+        format.heading(&mut builder, Heading::new(HeadingLevel::Level3, "level 3"));
 
         assert_eq!(
             "<h1>hello world</h1><h2>level 2</h2><h3>level 3</h3>",

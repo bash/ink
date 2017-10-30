@@ -45,7 +45,7 @@ where
         BlockParser { tokenizer: BlockTokenizer::new(input) }
     }
 
-    fn parse_text(&mut self) -> Option<Result<Block, ParseError>> {
+    fn parse_text(&mut self) -> Option<Result<Block<'a>, ParseError>> {
         let mut accumulator = TextAccumulator::new();
 
         loop {
@@ -65,7 +65,7 @@ where
         Some(Ok(Block::Text { content: accumulator.consume() }))
     }
 
-    fn parse_quote(&mut self) -> Option<Result<Block, ParseError>> {
+    fn parse_quote(&mut self) -> Option<Result<Block<'a>, ParseError>> {
         let mut accumulator = TextAccumulator::new();
 
         loop {
@@ -85,7 +85,7 @@ where
         Some(Ok(Block::Quote { content: accumulator.consume() }))
     }
 
-    fn parse_heading(&mut self, line_type: LineType) -> Option<Result<Block, ParseError>> {
+    fn parse_heading(&mut self, line_type: LineType) -> Option<Result<Block<'a>, ParseError>> {
         let level = match line_type {
             LineType::Heading1 => HeadingLevel::Level1,
             LineType::Heading2 => HeadingLevel::Level2,
@@ -96,7 +96,7 @@ where
         match self.tokenizer.consume(line_type)? {
             Err(err) => Some(Err(err)),
             Ok(line) => Some(Ok(Block::from_inner(
-                Heading::new(level, line.value()?.trim().into()),
+                Heading::new(level, line.value()?.trim().to_string()),
             ))),
         }
     }
@@ -107,7 +107,7 @@ where
     S: IntoParserInput<'a>,
     I: Iterator<Item = S>,
 {
-    type Item = Result<Block, ParseError>;
+    type Item = Result<Block<'a>, ParseError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -179,17 +179,17 @@ mod tests {
         let mut parser = BlockParser::from_string("# hello world\n##    level 2\n### three");
 
         assert_eq!(
-            Block::from_inner(Heading::new(HeadingLevel::Level1, "hello world".into())),
+            Block::from_inner(Heading::new(HeadingLevel::Level1, "hello world")),
             unwrap!(parser.next())
         );
 
         assert_eq!(
-            Block::from_inner(Heading::new(HeadingLevel::Level2, "level 2".into())),
+            Block::from_inner(Heading::new(HeadingLevel::Level2, "level 2")),
             unwrap!(parser.next())
         );
 
         assert_eq!(
-            Block::from_inner(Heading::new(HeadingLevel::Level3, "three".into())),
+            Block::from_inner(Heading::new(HeadingLevel::Level3, "three")),
             unwrap!(parser.next())
         );
     }

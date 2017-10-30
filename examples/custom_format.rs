@@ -10,9 +10,11 @@ use std::io::{BufRead, BufReader};
 #[derive(Debug)]
 struct CustomFormat;
 
-impl Format for CustomFormat {
-    fn heading(&self, builder: &mut Builder, heading: Heading) {
-        let level = match heading.level() {
+impl<'a> Format<'a> for CustomFormat {
+    fn heading(&self, builder: &mut Builder<'a>, heading: Heading<'a>) {
+        let (level, content) = heading.consume();
+
+        let level = match level {
             HeadingLevel::Level2 => "2",
             HeadingLevel::Level3 => "3",
             _ => "1",
@@ -22,7 +24,7 @@ impl Format for CustomFormat {
             .tag_start("div")
             .add_attr("class", format!("heading-level-{}", level))
             .finish()
-            .text(heading.content())
+            .text(content)
             .tag_end("div");
     }
 }

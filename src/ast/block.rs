@@ -1,3 +1,7 @@
+use std::borrow::Cow;
+
+pub type Document<'a> = Vec<Block<'a>>;
+
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum HeadingLevel {
     Level1,
@@ -14,18 +18,18 @@ pub enum ListType {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct Heading {
+pub struct Heading<'a> {
     level: HeadingLevel,
-    content: String,
+    content: Cow<'a, str>,
 }
 
-pub trait BlockInner {
-    fn wrap(self) -> Block;
+pub trait BlockInner<'a> {
+    fn wrap(self) -> Block<'a>;
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum Block {
-    Heading(Heading),
+pub enum Block<'a> {
+    Heading(Heading<'a>),
     Text { content: String },
     Quote { content: String },
     FencedBlock {
@@ -38,32 +42,41 @@ pub enum Block {
     },
 }
 
-impl Block {
+impl<'a> Block<'a> {
     pub fn from_inner<I>(inner: I) -> Self
     where
-        I: BlockInner,
+        I: BlockInner<'a>,
     {
         inner.wrap()
     }
 }
 
-impl BlockInner for Heading {
-    fn wrap(self) -> Block {
+impl<'a> BlockInner<'a> for Heading<'a> {
+    fn wrap(self) -> Block<'a> {
         Block::Heading(self)
     }
 }
 
-impl Heading {
-    pub fn new(level: HeadingLevel, content: String) -> Self {
-        Heading { level, content }
+impl<'a> Heading<'a> {
+    pub fn new<S>(level: HeadingLevel, content: S) -> Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        Heading {
+            level,
+            content: content.into(),
+        }
     }
 
     pub fn level(&self) -> HeadingLevel {
         self.level
     }
 
-    // TODO: change to &'a str
-    pub fn content(self) -> String {
-        self.content
+    pub fn content(&self) -> &Cow<'a, str> {
+        &self.content
+    }
+
+    pub fn consume(self) -> (HeadingLevel, Cow<'a, str>) {
+        (self.level, self.content)
     }
 }

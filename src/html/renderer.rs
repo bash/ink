@@ -19,7 +19,7 @@ enum OwnedOrBorrowed<'a, T: 'a> {
 /// use squid::ast::{Heading, HeadingLevel, BlockInner};
 ///
 /// let blocks = vec![
-///     Ok(Heading::new(HeadingLevel::Level1, "Hello World".into()).wrap()),
+///     Ok(Heading::new(HeadingLevel::Level1, "Hello World").wrap()),
 /// ];
 ///
 /// let mut renderer = Renderer::new(blocks.into_iter());
@@ -35,11 +35,11 @@ enum OwnedOrBorrowed<'a, T: 'a> {
 /// ```
 ///
 #[derive(Debug)]
-pub struct Renderer<'a, 'b, F, I>
+pub struct Renderer<'a, 'b: 'a, F, I>
 where
-    F: Format + 'static,
+    F: Format<'a> + 'static,
     // TODO: use own error type
-    I: Iterator<Item = Result<Block, ParseError>>,
+    I: Iterator<Item = Result<Block<'a>, ParseError>>,
 {
     // Not using Cow because Cow would require F to be `Clone`able
     format: OwnedOrBorrowed<'a, F>,
@@ -58,13 +58,13 @@ impl<'a, T: 'a> ops::Deref for OwnedOrBorrowed<'a, T> {
     }
 }
 
-impl<'a, 'b, I> Renderer<'a, 'b, DefaultFormat, I>
+impl<'a, 'b: 'a, I> Renderer<'a, 'b, DefaultFormat, I>
 where
-    I: Iterator<Item = Result<Block, ParseError>>,
+    I: Iterator<Item = Result<Block<'a>, ParseError>>,
 {
-    ///
-    /// Creates a new renderer with the default implementation of `Format`.
-    ///
+///
+/// Creates a new renderer with the default implementation of `Format`.
+///
     pub fn new(input: I) -> Self {
         Renderer {
             input,
@@ -74,10 +74,10 @@ where
     }
 }
 
-impl<'a, 'b, F, I> Renderer<'a, 'b, F, I>
+impl<'a, 'b: 'a, F, I> Renderer<'a, 'b, F, I>
 where
-    F: Format + 'static,
-    I: Iterator<Item = Result<Block, ParseError>>,
+    F: Format<'a> + 'static,
+    I: Iterator<Item = Result<Block<'a>, ParseError>>,
 {
     pub fn with_format(format: &'a F, input: I) -> Self {
         Renderer {
@@ -88,12 +88,17 @@ where
     }
 }
 
-impl<'a, 'b, F, I> Iterator for Renderer<'a, 'b, F, I>
+impl<'a, 'b: 'a, F, I> Iterator for Renderer<'a, 'b, F, I>
 where
-    F: Format + 'static,
-    I: Iterator<Item = Result<Block, ParseError>>,
+    F: Format<'a> + 'static,
+    I: Iterator<
+        Item = Result<
+            Block<'a>,
+            ParseError,
+        >,
+    >,
 {
-    type Item = Result<Output<'b>, ParseError>;
+    type Item = Result<Output<'a>, ParseError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = self.input.next()?.and_then(|block| {
