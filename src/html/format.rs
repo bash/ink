@@ -1,5 +1,5 @@
 use super::builders::Builder;
-use ast::HeadingLevel;
+use super::super::ast::{HeadingLevel, Text, Inline};
 use std::fmt::Debug;
 
 ///
@@ -7,15 +7,7 @@ use std::fmt::Debug;
 /// A `Format` allows to customize output generation (e.g. custom tags, classes, ...)
 ///
 // TODO: I need some feedback on the name `Format`
-// TODO: API is only a draft
 pub trait Format: Debug {
-    fn heading(&self, builder: &mut Builder, level: HeadingLevel, content: String);
-}
-
-#[derive(Debug)]
-pub struct DefaultFormat;
-
-impl Format for DefaultFormat {
     fn heading(&self, builder: &mut Builder, level: HeadingLevel, content: String) {
         let tag = match level {
             HeadingLevel::Level1 => "h1",
@@ -26,7 +18,37 @@ impl Format for DefaultFormat {
 
         builder.tag_start(tag).finish().text(content).tag_end(tag);
     }
+
+    fn paragraph(&self, builder: &mut Builder, text: Text) {
+        builder.tag_start("p").finish();
+
+        self.text(builder, text);
+
+        builder.tag_end("p");
+    }
+
+    fn text(&self, builder: &mut Builder, text: Text) {
+        for inline in text {
+            self.inline(builder, inline);
+        }
+    }
+
+    fn inline(&self, builder: &mut Builder, inline: Inline) {
+        match inline {
+            Inline::LineBreak => {
+                builder.tag_start("br").finish();
+            }
+            Inline::Chunk(text) => {
+                builder.text(text);
+            }
+        }
+    }
 }
+
+#[derive(Debug)]
+pub struct DefaultFormat;
+
+impl Format for DefaultFormat {}
 
 #[cfg(test)]
 mod tests {
@@ -34,7 +56,7 @@ mod tests {
     use ast::HeadingLevel;
 
     #[test]
-    fn default_heading() {
+    fn default_heading_works() {
         let format = DefaultFormat;
         let mut builder = Builder::new();
 

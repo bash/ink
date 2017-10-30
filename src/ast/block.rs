@@ -24,7 +24,7 @@ pub struct Decorator;
 #[derive(Debug, Eq, PartialEq)]
 pub enum Block {
     Heading(HeadingLevel, String),
-    Text(Text),
+    Paragraph(Text),
     Quote(Text),
     FencedBlock(Option<Decorator>, String),
     List(ListType, Vec<Text>),

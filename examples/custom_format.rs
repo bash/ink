@@ -33,7 +33,7 @@ fn main() {
     let parser = BlockParser::new(reader.lines());
     let renderer = Renderer::with_format(&CustomFormat, parser);
 
-    for block in renderer.take(3) {
+    for block in renderer.take(4) {
         println!("{}", block.unwrap());
     }
 }

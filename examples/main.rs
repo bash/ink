@@ -11,7 +11,7 @@ fn main() {
     let parser = BlockParser::new(reader.lines());
     let renderer = Renderer::new(parser);
 
-    for block in renderer.take(3) {
+    for block in renderer.take(4) {
         println!("{}", block.unwrap());
     }
 }

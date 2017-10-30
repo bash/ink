@@ -62,7 +62,7 @@ where
             }
         }
 
-        Some(Ok(Block::Text(accumulator.consume())))
+        Some(Ok(Block::Paragraph(accumulator.consume())))
     }
 
     fn parse_quote(&mut self) -> Option<Result<Block, ParseError>> {
@@ -137,8 +137,7 @@ impl TextAccumulator {
 
     ///
     /// Adds a new line to the current accumulated text.
-    /// Todo: this should also take care of newlines with two spaces
-    ///c
+    ///
     pub fn add(&mut self, line: &str) {
         if self.buffer.len() > 0 {
             self.buffer.push_str(" ");
@@ -168,7 +167,7 @@ mod tests {
         let mut parser = BlockParser::from_string("Lorem ipsum\ndolor sit amet");
 
         assert_eq!(
-            Block::Text(vec![Inline::Chunk("Lorem ipsum dolor sit amet".into())]),
+            Block::Paragraph(vec![Inline::Chunk("Lorem ipsum dolor sit amet".into())]),
             unwrap!(parser.next())
         );
     }
@@ -208,7 +207,7 @@ mod tests {
         let mut parser = BlockParser::from_string("Foo\n    \tbar baz");
 
         assert_eq!(
-            Block::Text(vec![Inline::Chunk("Foo bar baz".into())]),
+            Block::Paragraph(vec![Inline::Chunk("Foo bar baz".into())]),
             unwrap!(parser.next())
         );
     }
@@ -218,7 +217,7 @@ mod tests {
         let mut parser = BlockParser::from_string("   \n \t \nfoo");
 
         assert_eq!(
-            Block::Text(vec![Inline::Chunk("foo".into())]),
+            Block::Paragraph(vec![Inline::Chunk("foo".into())]),
             unwrap!(parser.next())
         );
     }
