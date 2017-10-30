@@ -2,17 +2,17 @@ use super::builders::Event;
 use std::fmt;
 
 #[derive(Debug)]
-pub struct Output<'a> {
-    events: Vec<Event<'a>>,
+pub struct Output {
+    events: Vec<Event>,
 }
 
-impl<'a> Output<'a> {
-    pub(crate) fn new(events: Vec<Event<'a>>) -> Self {
+impl Output {
+    pub(crate) fn new(events: Vec<Event>) -> Self {
         Output { events }
     }
 }
 
-impl<'a> fmt::Display for Output<'a> {
+impl fmt::Display for Output {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for event in &self.events {
             write!(f, "{}", event)?;

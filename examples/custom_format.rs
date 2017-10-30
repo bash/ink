@@ -1,7 +1,7 @@
 extern crate squid;
 
 use squid::BlockParser;
-use squid::ast::{Heading, HeadingLevel};
+use squid::ast::HeadingLevel;
 use squid::html::{Renderer, Format};
 use squid::html::builders::Builder;
 use std::fs::File;
@@ -10,11 +10,9 @@ use std::io::{BufRead, BufReader};
 #[derive(Debug)]
 struct CustomFormat;
 
-impl<'a> Format<'a> for CustomFormat {
-    fn heading(&self, builder: &mut Builder<'a>, heading: Heading<'a>) {
-        let (level, content) = heading.consume();
-
-        let level = match level {
+impl Format for CustomFormat {
+    fn heading(&self, builder: &mut Builder, level: HeadingLevel, content: String) {
+        let level_str = match level {
             HeadingLevel::Level2 => "2",
             HeadingLevel::Level3 => "3",
             _ => "1",
@@ -22,7 +20,7 @@ impl<'a> Format<'a> for CustomFormat {
 
         builder
             .tag_start("div")
-            .add_attr("class", format!("heading-level-{}", level))
+            .add_attr("class", format!("heading-level-{}", level_str))
             .finish()
             .text(content)
             .tag_end("div");

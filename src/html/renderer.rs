@@ -16,10 +16,10 @@ enum OwnedOrBorrowed<'a, T: 'a> {
 ///
 /// ```
 /// use squid::html::Renderer;
-/// use squid::ast::{Heading, HeadingLevel, BlockInner};
+/// use squid::ast::{Block, HeadingLevel};
 ///
 /// let blocks = vec![
-///     Ok(Heading::new(HeadingLevel::Level1, "Hello World").wrap()),
+///     Ok(Block::Heading(HeadingLevel::Level1, "Hello World".into())),
 /// ];
 ///
 /// let mut renderer = Renderer::new(blocks.into_iter());
@@ -35,16 +35,15 @@ enum OwnedOrBorrowed<'a, T: 'a> {
 /// ```
 ///
 #[derive(Debug)]
-pub struct Renderer<'a, 'b: 'a, F, I>
+pub struct Renderer<'a, F, I>
 where
-    F: Format<'a> + 'static,
+    F: Format + 'static,
     // TODO: use own error type
-    I: Iterator<Item = Result<Block<'a>, ParseError>>,
+    I: Iterator<Item = Result<Block, ParseError>>,
 {
     // Not using Cow because Cow would require F to be `Clone`able
     format: OwnedOrBorrowed<'a, F>,
     input: I,
-    _marker: ::std::marker::PhantomData<&'b ()>,
 }
 
 impl<'a, T: 'a> ops::Deref for OwnedOrBorrowed<'a, T> {
@@ -58,54 +57,47 @@ impl<'a, T: 'a> ops::Deref for OwnedOrBorrowed<'a, T> {
     }
 }
 
-impl<'a, 'b: 'a, I> Renderer<'a, 'b, DefaultFormat, I>
+impl<'a, I> Renderer<'a, DefaultFormat, I>
 where
-    I: Iterator<Item = Result<Block<'a>, ParseError>>,
+    I: Iterator<Item = Result<Block, ParseError>>,
 {
-///
-/// Creates a new renderer with the default implementation of `Format`.
-///
+    ///
+    /// Creates a new renderer with the default implementation of `Format`.
+    ///
     pub fn new(input: I) -> Self {
         Renderer {
             input,
             format: OwnedOrBorrowed::Owned(DefaultFormat),
-            _marker: ::std::marker::PhantomData,
         }
     }
 }
 
-impl<'a, 'b: 'a, F, I> Renderer<'a, 'b, F, I>
+impl<'a, F, I> Renderer<'a, F, I>
 where
-    F: Format<'a> + 'static,
-    I: Iterator<Item = Result<Block<'a>, ParseError>>,
+    F: Format + 'static,
+    I: Iterator<Item = Result<Block, ParseError>>,
 {
     pub fn with_format(format: &'a F, input: I) -> Self {
         Renderer {
             format: OwnedOrBorrowed::Borrowed(format),
             input,
-            _marker: ::std::marker::PhantomData,
         }
     }
 }
 
-impl<'a, 'b: 'a, F, I> Iterator for Renderer<'a, 'b, F, I>
+impl<'a, F, I> Iterator for Renderer<'a, F, I>
 where
-    F: Format<'a> + 'static,
-    I: Iterator<
-        Item = Result<
-            Block<'a>,
-            ParseError,
-        >,
-    >,
+    F: Format + 'static,
+    I: Iterator<Item = Result<Block, ParseError>>,
 {
-    type Item = Result<Output<'a>, ParseError>;
+    type Item = Result<Output, ParseError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = self.input.next()?.and_then(|block| {
             let mut builder = Builder::new();
 
             match block {
-                Block::Heading(inner) => self.format.heading(&mut builder, inner),
+                Block::Heading(level, content) => self.format.heading(&mut builder, level, content),
                 _ => unimplemented!(),
             }
 

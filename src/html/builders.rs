@@ -5,15 +5,15 @@ use super::output::Output;
 use super::escape::Escape;
 
 #[derive(Debug)]
-pub struct Builder<'a> {
-    events: Vec<Event<'a>>,
+pub struct Builder {
+    events: Vec<Event>,
 }
 
 #[derive(Debug)]
-pub struct TagStartBuilder<'a, 'b: 'a> {
-    name: Cow<'b, str>,
-    attrs: Vec<Attribute<'b>>,
-    builder: &'a mut Builder<'b>,
+pub struct TagStartBuilder<'a> {
+    name: Cow<'static, str>,
+    attrs: Vec<Attribute<'static>>,
+    builder: &'a mut Builder,
 }
 
 type Attribute<'a> = (Cow<'a, str>, Cow<'a, str>);
@@ -22,13 +22,13 @@ type Attribute<'a> = (Cow<'a, str>, Cow<'a, str>);
 // to make changes to the representation without breaking api compatiblity
 // Consumers have to use the respective methods on a `Builder` instance instead.
 #[derive(Debug)]
-pub(crate) enum Event<'a> {
+pub(crate) enum Event {
     TagStart {
-        name: Cow<'a, str>,
-        attrs: Vec<Attribute<'a>>,
+        name: Cow<'static, str>,
+        attrs: Vec<Attribute<'static>>,
     },
-    Text { text: Cow<'a, str> },
-    TagEnd { name: Cow<'a, str> },
+    Text { text: Cow<'static, str> },
+    TagEnd { name: Cow<'static, str> },
 }
 
 fn format_attrs<'a>(f: &mut fmt::Formatter, attrs: &Vec<Attribute<'a>>) -> fmt::Result {
@@ -39,18 +39,18 @@ fn format_attrs<'a>(f: &mut fmt::Formatter, attrs: &Vec<Attribute<'a>>) -> fmt::
     Ok(())
 }
 
-impl<'a> Builder<'a> {
+impl Builder {
     pub(crate) fn new() -> Self {
         Builder { events: Vec::new() }
     }
 
-    pub(crate) fn consume(self) -> Output<'a> {
+    pub(crate) fn consume(self) -> Output {
         Output::new(self.events)
     }
 
-    pub fn tag_start<'b, N>(&'b mut self, name: N) -> TagStartBuilder<'b, 'a>
+    pub fn tag_start<'a, N>(&'a mut self, name: N) -> TagStartBuilder<'a>
     where
-        N: Into<Cow<'a, str>>,
+        N: Into<Cow<'static, str>>,
     {
         TagStartBuilder {
             name: name.into(),
@@ -61,7 +61,7 @@ impl<'a> Builder<'a> {
 
     pub fn text<T>(&mut self, text: T) -> &mut Self
     where
-        T: Into<Cow<'a, str>>,
+        T: Into<Cow<'static, str>>,
     {
         self.events.push(Event::Text { text: text.into() });
 
@@ -70,19 +70,19 @@ impl<'a> Builder<'a> {
 
     pub fn tag_end<T>(&mut self, name: T) -> &mut Self
     where
-        T: Into<Cow<'a, str>>,
+        T: Into<Cow<'static, str>>,
     {
         self.events.push(Event::TagEnd { name: name.into() });
 
         self
     }
 
-    fn append(&mut self, event: Event<'a>) {
+    fn append(&mut self, event: Event) {
         self.events.push(event);
     }
 }
 
-impl<'a> fmt::Display for Event<'a> {
+impl<'a> fmt::Display for Event {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &Event::Text { ref text } => write!(f, "{}", Escape(text)),
@@ -99,18 +99,18 @@ impl<'a> fmt::Display for Event<'a> {
     }
 }
 
-impl<'a, 'b> TagStartBuilder<'a, 'b> {
+impl<'a> TagStartBuilder<'a> {
     pub fn add_attr<N, V>(&mut self, name: N, value: V) -> &mut Self
     where
-        N: Into<Cow<'b, str>>,
-        V: Into<Cow<'b, str>>,
+        N: Into<Cow<'static, str>>,
+        V: Into<Cow<'static, str>>,
     {
         self.attrs.push((name.into(), value.into()));
 
         self
     }
 
-    pub fn finish(&'a mut self) -> &'a mut Builder<'b> {
+    pub fn finish(&'a mut self) -> &'a mut Builder {
         let mut attrs = vec![];
 
         mem::swap(&mut self.attrs, &mut attrs);

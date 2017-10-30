@@ -1,9 +1,7 @@
-use std::borrow::Cow;
+pub type Text = Vec<Inline>;
 
-pub type Text<'a> = Vec<Inline<'a>>;
-
-#[derive(Debug)]
-pub enum Inline<'a> {
+#[derive(Debug, PartialEq, Eq)]
+pub enum Inline {
     LineBreak,
-    Chunk(Cow<'a, str>),
+    Chunk(String),
 }

@@ -1,6 +1,6 @@
 use super::block_tokenizer::BlockTokenizer;
 use super::tokens::LineType;
-use super::ast::{Block, Heading, HeadingLevel};
+use super::ast::{Block, HeadingLevel, Inline, Text};
 use super::input::IntoParserInput;
 use super::error::ParseError;
 use std::str::Lines;
@@ -45,7 +45,7 @@ where
         BlockParser { tokenizer: BlockTokenizer::new(input) }
     }
 
-    fn parse_text(&mut self) -> Option<Result<Block<'a>, ParseError>> {
+    fn parse_text(&mut self) -> Option<Result<Block, ParseError>> {
         let mut accumulator = TextAccumulator::new();
 
         loop {
@@ -62,10 +62,10 @@ where
             }
         }
 
-        Some(Ok(Block::Text { content: accumulator.consume() }))
+        Some(Ok(Block::Text(accumulator.consume())))
     }
 
-    fn parse_quote(&mut self) -> Option<Result<Block<'a>, ParseError>> {
+    fn parse_quote(&mut self) -> Option<Result<Block, ParseError>> {
         let mut accumulator = TextAccumulator::new();
 
         loop {
@@ -82,10 +82,10 @@ where
             }
         }
 
-        Some(Ok(Block::Quote { content: accumulator.consume() }))
+        Some(Ok(Block::Quote(accumulator.consume())))
     }
 
-    fn parse_heading(&mut self, line_type: LineType) -> Option<Result<Block<'a>, ParseError>> {
+    fn parse_heading(&mut self, line_type: LineType) -> Option<Result<Block, ParseError>> {
         let level = match line_type {
             LineType::Heading1 => HeadingLevel::Level1,
             LineType::Heading2 => HeadingLevel::Level2,
@@ -95,9 +95,7 @@ where
 
         match self.tokenizer.consume(line_type)? {
             Err(err) => Some(Err(err)),
-            Ok(line) => Some(Ok(Block::from_inner(
-                Heading::new(level, line.value()?.trim().to_string()),
-            ))),
+            Ok(line) => Some(Ok(Block::Heading(level, line.value()?.trim().into()))),
         }
     }
 }
@@ -107,7 +105,7 @@ where
     S: IntoParserInput<'a>,
     I: Iterator<Item = S>,
 {
-    type Item = Result<Block<'a>, ParseError>;
+    type Item = Result<Block, ParseError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -140,7 +138,7 @@ impl TextAccumulator {
     ///
     /// Adds a new line to the current accumulated text.
     /// Todo: this should also take care of newlines with two spaces
-    ///
+    ///c
     pub fn add(&mut self, line: &str) {
         if self.buffer.len() > 0 {
             self.buffer.push_str(" ");
@@ -149,8 +147,9 @@ impl TextAccumulator {
         self.buffer.push_str(line.trim());
     }
 
-    pub fn consume(self) -> String {
-        self.buffer
+    pub fn consume(self) -> Text {
+        // TODO: only temporary until we implement inline parsing
+        vec![Inline::Chunk(self.buffer)]
     }
 }
 
@@ -169,7 +168,7 @@ mod tests {
         let mut parser = BlockParser::from_string("Lorem ipsum\ndolor sit amet");
 
         assert_eq!(
-            Block::Text { content: "Lorem ipsum dolor sit amet".to_string() },
+            Block::Text(vec![Inline::Chunk("Lorem ipsum dolor sit amet".into())]),
             unwrap!(parser.next())
         );
     }
@@ -179,17 +178,17 @@ mod tests {
         let mut parser = BlockParser::from_string("# hello world\n##    level 2\n### three");
 
         assert_eq!(
-            Block::from_inner(Heading::new(HeadingLevel::Level1, "hello world")),
+            Block::Heading(HeadingLevel::Level1, "hello world".into()),
             unwrap!(parser.next())
         );
 
         assert_eq!(
-            Block::from_inner(Heading::new(HeadingLevel::Level2, "level 2")),
+            Block::Heading(HeadingLevel::Level2, "level 2".into()),
             unwrap!(parser.next())
         );
 
         assert_eq!(
-            Block::from_inner(Heading::new(HeadingLevel::Level3, "three")),
+            Block::Heading(HeadingLevel::Level3, "three".into()),
             unwrap!(parser.next())
         );
     }
@@ -199,7 +198,7 @@ mod tests {
         let mut parser = BlockParser::from_string("> Foo\n> bar baz");
 
         assert_eq!(
-            Block::Quote { content: "Foo bar baz".into() },
+            Block::Quote(vec![Inline::Chunk("Foo bar baz".into())]),
             unwrap!(parser.next())
         );
     }
@@ -209,7 +208,7 @@ mod tests {
         let mut parser = BlockParser::from_string("Foo\n    \tbar baz");
 
         assert_eq!(
-            Block::Text { content: "Foo bar baz".into() },
+            Block::Text(vec![Inline::Chunk("Foo bar baz".into())]),
             unwrap!(parser.next())
         );
     }
@@ -219,7 +218,7 @@ mod tests {
         let mut parser = BlockParser::from_string("   \n \t \nfoo");
 
         assert_eq!(
-            Block::Text { content: "foo".into() },
+            Block::Text(vec![Inline::Chunk("foo".into())]),
             unwrap!(parser.next())
         );
     }
