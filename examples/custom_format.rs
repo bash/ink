@@ -1,7 +1,7 @@
 extern crate squid;
 
 use squid::BlockParser;
-use squid::ast::HeadingLevel;
+use squid::ast::{HeadingLevel, Block};
 use squid::html::{Renderer, Format};
 use squid::html::builders::Builder;
 use std::fs::File;
@@ -31,9 +31,17 @@ fn main() {
     let file = File::open("examples/demo.sq").unwrap();
     let reader = BufReader::new(&file);
     let parser = BlockParser::new(reader.lines());
-    let renderer = Renderer::with_format(&CustomFormat, parser);
+    let renderer = Renderer::with_format(
+        &CustomFormat,
+        parser.filter(|block| match block {
+            &Ok(Block::Heading(..)) => false,
+            &Ok(Block::Quote(..)) => true,
+            &Ok(Block::Paragraph(..)) => true,
+            _ => false,
+        }),
+    );
 
-    for block in renderer.take(4) {
+    for block in renderer {
         println!("{}", block.unwrap());
     }
 }
