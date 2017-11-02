@@ -32,7 +32,7 @@ fn main() {
     let reader = BufReader::new(&file);
     let parser = BlockParser::new(reader.lines());
     let renderer = Renderer::with_format(
-        &CustomFormat,
+        CustomFormat,
         parser.filter(|block| match block {
             &Ok(Block::Heading(..)) => false,
             &Ok(Block::Quote(..)) => true,

@@ -3,13 +3,6 @@ use error::ParseError;
 use super::format::{Format, DefaultFormat};
 use super::builders::Builder;
 use super::output::Output;
-use std::ops;
-
-#[derive(Debug)]
-enum OwnedOrBorrowed<'a, T: 'a> {
-    Owned(T),
-    Borrowed(&'a T),
-}
 
 ///
 /// # Example
@@ -35,28 +28,17 @@ enum OwnedOrBorrowed<'a, T: 'a> {
 /// ```
 ///
 #[derive(Debug)]
-pub struct Renderer<'a, F, I>
+pub struct Renderer<F, I>
 where
     F: Format + 'static,
     I: Iterator<Item = Result<Block, ParseError>>,
 {
     // Not using Cow because Cow would require F to be `Clone`able
-    format: OwnedOrBorrowed<'a, F>,
+    format: F,
     input: I,
 }
 
-impl<'a, T: 'a> ops::Deref for OwnedOrBorrowed<'a, T> {
-    type Target = T;
-
-    fn deref(&self) -> &T {
-        match self {
-            &OwnedOrBorrowed::Borrowed(val) => val,
-            &OwnedOrBorrowed::Owned(ref val) => &val,
-        }
-    }
-}
-
-impl<'a, I> Renderer<'a, DefaultFormat, I>
+impl<I> Renderer<DefaultFormat, I>
 where
     I: Iterator<Item = Result<Block, ParseError>>,
 {
@@ -66,25 +48,22 @@ where
     pub fn new(input: I) -> Self {
         Renderer {
             input,
-            format: OwnedOrBorrowed::Owned(DefaultFormat),
+            format: DefaultFormat,
         }
     }
 }
 
-impl<'a, F, I> Renderer<'a, F, I>
+impl<F, I> Renderer<F, I>
 where
     F: Format + 'static,
     I: Iterator<Item = Result<Block, ParseError>>,
 {
-    pub fn with_format(format: &'a F, input: I) -> Self {
-        Renderer {
-            format: OwnedOrBorrowed::Borrowed(format),
-            input,
-        }
+    pub fn with_format(format: F, input: I) -> Self {
+        Renderer { format, input }
     }
 }
 
-impl<'a, F, I> Iterator for Renderer<'a, F, I>
+impl<F, I> Iterator for Renderer<F, I>
 where
     F: Format + 'static,
     I: Iterator<Item = Result<Block, ParseError>>,
