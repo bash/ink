@@ -137,7 +137,7 @@ impl TextAccumulator {
     /// Adds a new line to the current accumulated text.
     ///
     pub fn add(&mut self, line: &str) {
-        if self.buffer.is_empty() {
+        if !self.buffer.is_empty() {
             self.buffer.push_str(" ");
         }
 
