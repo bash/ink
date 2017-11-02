@@ -39,6 +39,7 @@ before_script:
 script:
   # linting
   - cargo fmt -- --write-mode=diff
+  - cargo clippy
   - cargo build --verbose
   - cargo test --verbose
 
