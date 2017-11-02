@@ -31,7 +31,7 @@ pub(crate) enum Event {
     TagEnd { name: Cow<'static, str> },
 }
 
-fn format_attrs<'a>(f: &mut fmt::Formatter, attrs: &Vec<Attribute<'a>>) -> fmt::Result {
+fn format_attrs<'a>(f: &mut fmt::Formatter, attrs: &[Attribute<'a>]) -> fmt::Result {
     for attr in attrs {
         write!(f, " {}=\"{}\"", attr.0, Escape(&attr.1))?;
     }
@@ -48,7 +48,7 @@ impl Builder {
         Output::new(self.events)
     }
 
-    pub fn tag_start<'a, N>(&'a mut self, name: N) -> TagStartBuilder<'a>
+    pub fn tag_start<N>(&mut self, name: N) -> TagStartBuilder
     where
         N: Into<Cow<'static, str>>,
     {
@@ -84,9 +84,9 @@ impl Builder {
 
 impl<'a> fmt::Display for Event {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Event::Text { ref text } => write!(f, "{}", Escape(text)),
-            &Event::TagStart {
+        match *self {
+            Event::Text { ref text } => write!(f, "{}", Escape(text)),
+            Event::TagStart {
                 ref name,
                 ref attrs,
             } => {
@@ -94,7 +94,7 @@ impl<'a> fmt::Display for Event {
                     .and_then(|_| format_attrs(f, attrs))
                     .and_then(|_| write!(f, ">"))
             }
-            &Event::TagEnd { ref name } => write!(f, "</{}>", name),
+            Event::TagEnd { ref name } => write!(f, "</{}>", name),
         }
     }
 }

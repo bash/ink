@@ -37,7 +37,7 @@ where
     input: iter::Peekable<IntoParserInputIter<'a, S, I>>,
 }
 
-fn parse_decorator<'a>(line: Cow<'a, str>) -> Line {
+fn parse_decorator<'a>(line: &Cow<'a, str>) -> Line<'a> {
     let trimmed = line.trim();
 
     Line::Decorator(trimmed.chars().skip(1).take(trimmed.len() - 2).collect())
@@ -95,9 +95,9 @@ where
     }
 
     pub fn peek(&mut self) -> Option<Result<LineType, PeekError>> {
-        let result = match self.input.peek()? {
-            &Err(_) => Err(PeekError),
-            &Ok(ref line) => Ok(get_line_type(line)),
+        let result = match *self.input.peek()? {
+            Err(_) => Err(PeekError),
+            Ok(ref line) => Ok(get_line_type(line)),
         };
 
         Some(result)
@@ -111,7 +111,7 @@ where
                     LineType::Blank => Some(Ok(Line::Blank)),
                     LineType::Divider => Some(Ok(Line::Divider)),
                     LineType::Text => Some(Ok(Line::Text(line))),
-                    LineType::Decorator => Some(Ok(parse_decorator(line))),
+                    LineType::Decorator => Some(Ok(parse_decorator(&line))),
                     LineType::Heading1 => parse_starter!(line, constants::HEADING1_TOKEN, Heading1),
                     LineType::Heading2 => parse_starter!(line, constants::HEADING2_TOKEN, Heading2),
                     LineType::Heading3 => parse_starter!(line, constants::HEADING3_TOKEN, Heading3),

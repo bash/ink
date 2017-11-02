@@ -50,7 +50,6 @@ where
 
         loop {
             match self.tokenizer.peek() {
-                None => break,
                 Some(Err(..)) => consume_error!(self.tokenizer),
                 Some(Ok(LineType::Text)) => {
                     // unwrapping here is safe
@@ -58,7 +57,7 @@ where
 
                     accumulator.add(&line.value().unwrap());
                 }
-                Some(Ok(_)) => break,
+                _ => break,
             }
         }
 
@@ -70,7 +69,6 @@ where
 
         loop {
             match self.tokenizer.peek() {
-                None => break,
                 Some(Err(..)) => consume_error!(self.tokenizer),
                 Some(Ok(LineType::Quote)) => {
                     // unwrapping here is safe
@@ -78,7 +76,7 @@ where
 
                     accumulator.add(&line.value().unwrap());
                 }
-                Some(Ok(_)) => break,
+                _ => break,
             }
         }
 
@@ -139,7 +137,7 @@ impl TextAccumulator {
     /// Adds a new line to the current accumulated text.
     ///
     pub fn add(&mut self, line: &str) {
-        if self.buffer.len() > 0 {
+        if self.buffer.is_empty() {
             self.buffer.push_str(" ");
         }
 

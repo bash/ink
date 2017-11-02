@@ -33,10 +33,9 @@ fn main() {
     let parser = BlockParser::new(reader.lines());
     let renderer = Renderer::with_format(
         CustomFormat,
-        parser.filter(|block| match block {
-            &Ok(Block::Heading(..)) => false,
-            &Ok(Block::Quote(..)) => true,
-            &Ok(Block::Paragraph(..)) => true,
+        parser.filter(|block| match *block {
+            Ok(Block::Quote(..)) |
+            Ok(Block::Paragraph(..)) => true,
             _ => false,
         }),
     );

@@ -31,15 +31,14 @@ pub enum LineType {
 impl<'a> Line<'a> {
     pub fn value(self) -> Option<Cow<'a, str>> {
         match self {
-            Line::Blank => None,
-            Line::Divider => None,
-            Line::Heading1(value) => Some(value),
-            Line::Heading2(value) => Some(value),
-            Line::Heading3(value) => Some(value),
-            Line::Text(value) => Some(value),
-            Line::Quote(value) => Some(value),
-            Line::Decorator(value) => Some(value),
-            Line::UnorderedList(value) => Some(value),
+            Line::Blank | Line::Divider => None,
+            Line::Heading1(value) |
+            Line::Heading2(value) |
+            Line::Heading3(value) |
+            Line::Text(value) |
+            Line::Quote(value) |
+            Line::Decorator(value) |
+            Line::UnorderedList(value) |
             Line::OrderedList(value) => Some(value),
         }
     }
