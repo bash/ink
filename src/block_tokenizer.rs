@@ -26,6 +26,8 @@ macro_rules! detect_line_starter {
   }
 }
 
+pub struct PeekError;
+
 #[derive(Debug)]
 pub struct BlockTokenizer<'a, S, I>
 where
@@ -92,9 +94,9 @@ where
         BlockTokenizer { input: IntoParserInputIter::new(input).peekable() }
     }
 
-    pub fn peek(&mut self) -> Option<Result<LineType, ParseError>> {
+    pub fn peek(&mut self) -> Option<Result<LineType, PeekError>> {
         let result = match self.input.peek()? {
-            &Err(_) => Err(ParseError::PeekError),
+            &Err(_) => Err(PeekError),
             &Ok(ref line) => Ok(get_line_type(line)),
         };
 
@@ -132,7 +134,9 @@ where
     #[allow(dead_code)]
     pub fn consume_line(&mut self) -> Option<Result<Line<'a>, ParseError>> {
         let result = match self.peek()? {
-            Err(err) => Err(err),
+            // peek does not give us a specific error
+            // so we'll call consume with any line type to get the error
+            Err(_) => self.consume(LineType::Blank)?,
             Ok(line_type) => self.consume(line_type)?,
         };
 

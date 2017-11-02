@@ -1,8 +1,15 @@
-use ast::Block;
-use error::ParseError;
+use std::fmt;
+use std::error::Error;
 use super::format::{Format, DefaultFormat};
 use super::builders::Builder;
 use super::output::Output;
+use super::super::error::ParseError;
+use super::super::ast::Block;
+
+#[derive(Debug)]
+pub enum RenderError {
+    ParseError(ParseError),
+}
 
 ///
 /// # Example
@@ -53,6 +60,32 @@ where
     }
 }
 
+impl fmt::Display for RenderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
+    }
+}
+
+impl Error for RenderError {
+    fn description(&self) -> &str {
+        match *self {
+            RenderError::ParseError(ref err) => err.description(),
+        }
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        match *self {
+            RenderError::ParseError(ref err) => Some(err),
+        }
+    }
+}
+
+impl From<ParseError> for RenderError {
+    fn from(err: ParseError) -> Self {
+        RenderError::ParseError(err)
+    }
+}
+
 impl<F, I> Renderer<F, I>
 where
     F: Format + 'static,
@@ -68,7 +101,7 @@ where
     F: Format + 'static,
     I: Iterator<Item = Result<Block, ParseError>>,
 {
-    type Item = Result<Output, ParseError>;
+    type Item = Result<Output, RenderError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = self.input.next()?.and_then(|block| {
@@ -85,6 +118,6 @@ where
             Ok(builder.consume())
         });
 
-        Some(node)
+        Some(node.map_err(Into::into))
     }
 }
