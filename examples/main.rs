@@ -1,18 +1,17 @@
 extern crate squid;
 
 use squid::BlockParser;
+use squid::html::Renderer;
 use std::fs::File;
-use std::io::Read;
+use std::io::{BufRead, BufReader};
 
 fn main() {
-    let mut file = File::open("demo.sq").unwrap();
-    let mut input = String::new();
+    let file = File::open("examples/demo.sq").unwrap();
+    let reader = BufReader::new(&file);
+    let parser = BlockParser::new(reader.lines());
+    let renderer = Renderer::new(parser);
 
-    file.read_to_string(&mut input).unwrap();
-
-    let parser = BlockParser::new(input);
-
-    for block in parser {
-        println!("{:?}", block);
+    for block in renderer.take(6) {
+        println!("{}", block.unwrap());
     }
 }
