@@ -1,5 +1,5 @@
 use super::builders::Builder;
-use super::super::ast::{HeadingLevel, Text, Inline, ListType};
+use super::super::ast::{HeadingLevel, Inline, ListType, Text};
 use std::fmt::Debug;
 
 ///
@@ -12,7 +12,6 @@ pub trait Format: Debug {
             HeadingLevel::Level1 => "h1",
             HeadingLevel::Level2 => "h2",
             HeadingLevel::Level3 => "h3",
-            HeadingLevel::__NonExhaustive => unreachable!(),
         };
 
         builder.tag_start(tag).finish().text(content).tag_end(tag);
