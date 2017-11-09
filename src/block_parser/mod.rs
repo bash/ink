@@ -48,7 +48,9 @@ impl BlockParser {
             LineType::Blank => panic!("no processor can handle blank lines"),
             LineType::Text => BlockParser::Paragraph(paragraph::ParagraphProcessor::new()),
             LineType::Quote => BlockParser::Quote(quote::QuoteProcessor::new()),
-            LineType::Heading1 | LineType::Heading2 | LineType::Heading3 => {
+            LineType::Heading1 |
+            LineType::Heading2 |
+            LineType::Heading3 => {
                 panic!("no processor can handle headings");
             }
             _ => unimplemented!(),
@@ -58,9 +60,7 @@ impl BlockParser {
 
 impl TextAccumulator {
     pub fn new() -> Self {
-        TextAccumulator {
-            buffer: String::new(),
-        }
+        TextAccumulator { buffer: String::new() }
     }
 
     ///

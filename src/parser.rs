@@ -27,9 +27,7 @@ where
 
 impl<'a> Parser<'a, &'a str, Lines<'a>> {
     pub fn from_string(input: &'a str) -> Self {
-        Parser {
-            input: IntoParserInputIter::new(input.lines()).peekable(),
-        }
+        Parser { input: IntoParserInputIter::new(input.lines()).peekable() }
     }
 }
 
@@ -39,9 +37,7 @@ where
     I: Iterator<Item = S>,
 {
     pub fn new(input: I) -> Self {
-        Parser {
-            input: IntoParserInputIter::new(input).peekable(),
-        }
+        Parser { input: IntoParserInputIter::new(input).peekable() }
     }
 
     fn peek(&mut self) -> Option<Result<LineType, ()>> {
@@ -52,9 +48,9 @@ where
     }
 
     fn parse_heading(&self, line_type: LineType, line: String) -> Block {
-        let level = line_type
-            .get_heading_level()
-            .expect("heading level should be defined for line type");
+        let level = line_type.get_heading_level().expect(
+            "heading level should be defined for line type",
+        );
 
         let line = parse_line(line_type, &line);
 

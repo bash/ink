@@ -26,8 +26,8 @@ fn parse_decorator(line: &str) -> Line {
 }
 
 fn is_decorator(line: &str) -> bool {
-    line.starts_with(constants::ANNOTATION_PREFIX_TOKEN)
-        && line.trim().ends_with(constants::ANNOTATION_SUFFIX_TOKEN)
+    line.starts_with(constants::ANNOTATION_PREFIX_TOKEN) &&
+        line.trim().ends_with(constants::ANNOTATION_SUFFIX_TOKEN)
 }
 
 fn is_divider(line: &str) -> bool {

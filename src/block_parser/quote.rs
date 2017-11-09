@@ -11,9 +11,7 @@ pub struct QuoteProcessor {
 
 impl QuoteProcessor {
     pub fn new() -> Self {
-        QuoteProcessor {
-            accumulator: TextAccumulator::new(),
-        }
+        QuoteProcessor { accumulator: TextAccumulator::new() }
     }
 }
 

@@ -34,7 +34,8 @@ fn main() {
     let renderer = Renderer::with_format(
         CustomFormat,
         parser.filter(|block| match *block {
-            Ok(Block::Quote(..)) | Ok(Block::Paragraph(..)) => true,
+            Ok(Block::Quote(..)) |
+            Ok(Block::Paragraph(..)) => true,
             _ => false,
         }),
     );

@@ -10,9 +10,7 @@ pub struct ParagraphProcessor {
 
 impl ParagraphProcessor {
     pub fn new() -> Self {
-        ParagraphProcessor {
-            accumulator: TextAccumulator::new(),
-        }
+        ParagraphProcessor { accumulator: TextAccumulator::new() }
     }
 }
 
