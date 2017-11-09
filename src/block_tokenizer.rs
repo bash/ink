@@ -1,6 +1,6 @@
 use super::constants;
 use super::tokens::{Line, LineType};
-use super::input::{ParserInputResult, IntoParserInput, IntoParserInputIter};
+use super::input::{IntoParserInput, IntoParserInputIter, ParserInputResult};
 use super::error::ParseError;
 use std::iter;
 use std::str::Lines;
@@ -44,8 +44,8 @@ fn parse_decorator<'a>(line: &Cow<'a, str>) -> Line<'a> {
 }
 
 fn is_decorator(line: &str) -> bool {
-    line.starts_with(constants::ANNOTATION_PREFIX_TOKEN) &&
-        line.trim().ends_with(constants::ANNOTATION_SUFFIX_TOKEN)
+    line.starts_with(constants::ANNOTATION_PREFIX_TOKEN)
+        && line.trim().ends_with(constants::ANNOTATION_SUFFIX_TOKEN)
 }
 
 fn is_divider(line: &str) -> bool {
@@ -91,7 +91,9 @@ where
     I: Iterator<Item = S>,
 {
     pub fn new(input: I) -> Self {
-        BlockTokenizer { input: IntoParserInputIter::new(input).peekable() }
+        BlockTokenizer {
+            input: IntoParserInputIter::new(input).peekable(),
+        }
     }
 
     pub fn peek(&mut self) -> Option<Result<LineType, PeekError>> {
@@ -106,24 +108,22 @@ where
     pub fn consume(&mut self, line_type: LineType) -> Option<Result<Line<'a>, ParseError>> {
         match self.consume_raw()? {
             Err(err) => Some(Err(err)),
-            Ok(line) => {
-                match line_type {
-                    LineType::Blank => Some(Ok(Line::Blank)),
-                    LineType::Divider => Some(Ok(Line::Divider)),
-                    LineType::Text => Some(Ok(Line::Text(line))),
-                    LineType::Decorator => Some(Ok(parse_decorator(&line))),
-                    LineType::Heading1 => parse_starter!(line, constants::HEADING1_TOKEN, Heading1),
-                    LineType::Heading2 => parse_starter!(line, constants::HEADING2_TOKEN, Heading2),
-                    LineType::Heading3 => parse_starter!(line, constants::HEADING3_TOKEN, Heading3),
-                    LineType::Quote => parse_starter!(line, constants::QUOTE_TOKEN, Quote),
-                    LineType::UnorderedList => {
-                        parse_starter!(line, constants::UNORDERED_LIST_TOKEN, UnorderedList)
-                    }
-                    LineType::OrderedList => {
-                        parse_starter!(line, constants::ORDERED_LIST_TOKEN, OrderedList)
-                    }
+            Ok(line) => match line_type {
+                LineType::Blank => Some(Ok(Line::Blank)),
+                LineType::Divider => Some(Ok(Line::Divider)),
+                LineType::Text => Some(Ok(Line::Text(line))),
+                LineType::Decorator => Some(Ok(parse_decorator(&line))),
+                LineType::Heading1 => parse_starter!(line, constants::HEADING1_TOKEN, Heading1),
+                LineType::Heading2 => parse_starter!(line, constants::HEADING2_TOKEN, Heading2),
+                LineType::Heading3 => parse_starter!(line, constants::HEADING3_TOKEN, Heading3),
+                LineType::Quote => parse_starter!(line, constants::QUOTE_TOKEN, Quote),
+                LineType::UnorderedList => {
+                    parse_starter!(line, constants::UNORDERED_LIST_TOKEN, UnorderedList)
                 }
-            }
+                LineType::OrderedList => {
+                    parse_starter!(line, constants::ORDERED_LIST_TOKEN, OrderedList)
+                }
+            },
         }
     }
 
