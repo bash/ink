@@ -17,27 +17,31 @@ macro_rules! opt_result_try {
 }
 
 #[derive(Debug)]
-pub struct Parser<'a, S, I>
+pub struct Parser<S, I>
 where
-    S: IntoParserInput<'a>,
+    S: IntoParserInput,
     I: Iterator<Item = S>,
 {
-    input: Peekable<IntoParserInputIter<'a, S, I>>,
+    input: Peekable<IntoParserInputIter<S, I>>,
 }
 
-impl<'a> Parser<'a, &'a str, Lines<'a>> {
+impl<'a> Parser<&'a str, Lines<'a>> {
     pub fn from_string(input: &'a str) -> Self {
-        Parser { input: IntoParserInputIter::new(input.lines()).peekable() }
+        Parser {
+            input: IntoParserInputIter::new(input.lines()).peekable(),
+        }
     }
 }
 
-impl<'a, S, I> Parser<'a, S, I>
+impl<S, I> Parser<S, I>
 where
-    S: IntoParserInput<'a>,
+    S: IntoParserInput,
     I: Iterator<Item = S>,
 {
     pub fn new(input: I) -> Self {
-        Parser { input: IntoParserInputIter::new(input).peekable() }
+        Parser {
+            input: IntoParserInputIter::new(input).peekable(),
+        }
     }
 
     fn peek(&mut self) -> Option<Result<LineType, ()>> {
@@ -48,9 +52,9 @@ where
     }
 
     fn parse_heading(&self, line_type: LineType, line: String) -> Block {
-        let level = line_type.get_heading_level().expect(
-            "heading level should be defined for line type",
-        );
+        let level = line_type
+            .get_heading_level()
+            .expect("heading level should be defined for line type");
 
         let line = parse_line(line_type, &line);
 
@@ -58,9 +62,9 @@ where
     }
 }
 
-impl<'a, S, I> Iterator for Parser<'a, S, I>
+impl<S, I> Iterator for Parser<S, I>
 where
-    S: IntoParserInput<'a>,
+    S: IntoParserInput,
     I: Iterator<Item = S>,
 {
     type Item = Result<Block, ParseError>;
