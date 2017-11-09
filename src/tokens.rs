@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use super::ast::HeadingLevel;
 
 #[derive(Debug, PartialEq, Eq)]
+#[deprecated]
 pub enum Line<'a> {
     Blank,
     Divider,

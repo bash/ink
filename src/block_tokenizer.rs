@@ -61,6 +61,7 @@ pub fn get_line_type(line: &str) -> LineType {
     LineType::Text
 }
 
+#[deprecated]
 pub fn parse_line(line_type: LineType, line: &str) -> Line {
     match line_type {
         LineType::Blank => Line::Blank,
