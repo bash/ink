@@ -6,7 +6,6 @@ use super::error::ParseError;
 use super::block_parser::BlockParser;
 use std::str::Lines;
 use std::iter::Peekable;
-use std::borrow::Cow;
 
 macro_rules! opt_result_try {
     ($result: expr) => {
@@ -52,7 +51,7 @@ where
         }
     }
 
-    fn parse_heading(&self, line_type: LineType, line: Cow<'a, str>) -> Block {
+    fn parse_heading(&self, line_type: LineType, line: String) -> Block {
         let level = line_type
             .get_heading_level()
             .expect("heading level should be defined for line type");
@@ -88,7 +87,7 @@ where
 
             let mut parser = BlockParser::for_line_type(line_type);
 
-            parser.processor_mut().process_line(line_type, line.into());
+            parser.processor_mut().process_line(line_type, line);
 
             loop {
                 let line_type = match self.peek() {

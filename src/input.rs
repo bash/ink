@@ -1,9 +1,8 @@
 use super::error::ParseError;
 use std::error::Error;
 use std::marker::PhantomData;
-use std::borrow::Cow;
 
-pub type ParserInputResult<'a> = Result<Cow<'a, str>, ParseError>;
+pub type ParserInputResult<'a> = Result<String, ParseError>;
 
 #[derive(Debug)]
 pub struct IntoParserInputIter<'a, S, I>
@@ -24,7 +23,7 @@ where
     E: Error + 'static,
 {
     fn into_parser_input(self) -> ParserInputResult<'a> {
-        self.map_err(ParseError::from_error).map(Cow::Borrowed)
+        self.map_err(ParseError::from_error).map(|val| val.into())
     }
 }
 
@@ -33,19 +32,19 @@ where
     E: Error + 'static,
 {
     fn into_parser_input(self) -> ParserInputResult<'a> {
-        self.map_err(ParseError::from_error).map(Cow::Owned)
+        self.map_err(ParseError::from_error)
     }
 }
 
 impl<'a> IntoParserInput<'a> for &'a str {
     fn into_parser_input(self) -> ParserInputResult<'a> {
-        Ok(Cow::Borrowed(self))
+        Ok(self.into())
     }
 }
 
 impl<'a> IntoParserInput<'a> for String {
     fn into_parser_input(self) -> ParserInputResult<'a> {
-        Ok(Cow::Owned(self))
+        Ok(self)
     }
 }
 
