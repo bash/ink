@@ -4,6 +4,9 @@ use super::ast::{Block, Inline, Text};
 mod paragraph;
 mod quote;
 
+use self::paragraph::ParagraphProcessor;
+use self::quote::QuoteProcessor;
+
 #[derive(Debug)]
 pub struct TextAccumulator {
     buffer: String,
@@ -17,8 +20,8 @@ pub trait BlockProcessor {
 
 #[derive(Debug)]
 pub enum BlockParser {
-    Paragraph(paragraph::ParagraphProcessor),
-    Quote(quote::QuoteProcessor),
+    Paragraph(ParagraphProcessor),
+    Quote(QuoteProcessor),
 }
 
 impl BlockParser {
@@ -46,8 +49,8 @@ impl BlockParser {
     pub fn for_line_type(line_type: LineType) -> Self {
         match line_type {
             LineType::Blank => panic!("no processor can handle blank lines"),
-            LineType::Text => BlockParser::Paragraph(paragraph::ParagraphProcessor::new()),
-            LineType::Quote => BlockParser::Quote(quote::QuoteProcessor::new()),
+            LineType::Text => BlockParser::Paragraph(ParagraphProcessor::new()),
+            LineType::Quote => BlockParser::Quote(QuoteProcessor::new()),
             LineType::Heading1 |
             LineType::Heading2 |
             LineType::Heading3 => {
