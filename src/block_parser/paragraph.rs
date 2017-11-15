@@ -1,29 +1,37 @@
 use super::TextAccumulator;
-use super::BlockProcessor;
+use super::{BlockParserInner, InspectOutput, TakeOutput};
 use super::super::ast::Block;
 use super::super::tokens::LineType;
 
 #[derive(Debug)]
-pub struct ParagraphProcessor {
-    accumulator: TextAccumulator,
-}
+pub struct ParagraphParser;
 
-impl ParagraphProcessor {
+impl ParagraphParser {
     pub fn new() -> Self {
-        ParagraphProcessor { accumulator: TextAccumulator::new() }
+        ParagraphParser {}
     }
 }
 
-impl BlockProcessor for ParagraphProcessor {
-    fn can_process(&self, line_type: LineType) -> bool {
-        matches!(line_type, LineType::Text)
+impl BlockParserInner for ParagraphParser {
+    fn inspect_line(&self, line_type: LineType, line: &str) -> InspectOutput {
+        match line_type {
+            LineType::Text => InspectOutput::Accept,
+            _ => InspectOutput::Reject,
+        }
     }
 
-    fn process_line(&mut self, _: LineType, line: String) {
-        self.accumulator.add(line);
+    fn take_line(&mut self, line_type: LineType, line: &str) -> TakeOutput {
+        self.inspect_line(line_type, line)
+            .map_to_take(|| TakeOutput::Accepted)
     }
 
-    fn consume(self) -> Block {
-        Block::Paragraph(self.accumulator.consume())
+    fn process(&self, lines: Vec<(LineType, String)>) -> Block {
+        let mut accumulator = TextAccumulator::new();
+
+        for (_, line) in lines {
+            accumulator.add(line);
+        }
+
+        Block::Paragraph(accumulator.consume())
     }
 }

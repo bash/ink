@@ -3,9 +3,10 @@ use super::tokens::LineType;
 use super::ast::Block;
 use super::input::{IntoParserInput, IntoParserInputIter};
 use super::error::ParseError;
-use super::block_parser::BlockParser;
+use super::block_parser::{BlockParser, ParserOutput};
 use std::str::Lines;
 use std::iter::Peekable;
+use std::mem;
 
 macro_rules! opt_result_try {
     ($result: expr) => {
@@ -27,7 +28,9 @@ where
 
 impl<'a> Parser<&'a str, Lines<'a>> {
     pub fn from_string(input: &'a str) -> Self {
-        Parser { input: IntoParserInputIter::new(input.lines()).peekable() }
+        Parser {
+            input: IntoParserInputIter::new(input.lines()).peekable(),
+        }
     }
 }
 
@@ -37,7 +40,9 @@ where
     I: Iterator<Item = S>,
 {
     pub fn new(input: I) -> Self {
-        Parser { input: IntoParserInputIter::new(input).peekable() }
+        Parser {
+            input: IntoParserInputIter::new(input).peekable(),
+        }
     }
 
     fn peek(&mut self) -> Option<Result<LineType, ()>> {
@@ -48,9 +53,9 @@ where
     }
 
     fn parse_heading(&self, line_type: LineType, line: String) -> Block {
-        let level = line_type.get_heading_level().expect(
-            "heading level should be defined for line type",
-        );
+        let level = line_type
+            .get_heading_level()
+            .expect("heading level should be defined for line type");
 
         let line = parse_line(line_type, &line);
 
@@ -70,20 +75,19 @@ where
             let line = opt_result_try!(self.input.next());
             let line_type = get_line_type(&line);
 
-            // empty lines never produce anything so we skip them
-            if let LineType::Blank = line_type {
-                continue;
-            }
-
             // headings are always only a single line, so it doesn't
             // make sense to create a processor for it.
+            // TODO: switch to block parser for headings
             if line_type.is_heading() {
                 return Some(Ok(self.parse_heading(line_type, line)));
             }
 
-            let mut parser = BlockParser::for_line_type(line_type);
+            let mut parser = match BlockParser::for_line_type(line_type) {
+                Some(parser) => parser,
+                None => continue,
+            };
 
-            parser.processor_mut().process_line(line_type, line);
+            parser.next_line(line_type, line);
 
             loop {
                 let line_type = match self.peek() {
@@ -92,16 +96,15 @@ where
                     Some(Ok(line_type)) => line_type,
                 };
 
-                if !parser.processor().can_process(line_type) {
-                    break;
-                }
-
                 let line = opt_result_try!(self.input.next());
 
-                parser.processor_mut().process_line(line_type, line.into())
+                match parser.next_line(line_type, line) {
+                    ParserOutput::Finished => break,
+                    ParserOutput::Pending => {}
+                };
             }
 
-            return Some(Ok(parser.consume()));
+            return Some(Ok(parser.process()));
         }
     }
 }

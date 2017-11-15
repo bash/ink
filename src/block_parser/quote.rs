@@ -1,33 +1,38 @@
 use super::TextAccumulator;
-use super::BlockProcessor;
+use super::{BlockParserInner, InspectOutput, TakeOutput};
 use super::super::ast::Block;
 use super::super::tokens::LineType;
-use super::super::constants;
+use super::super::block_tokenizer::parse_quote;
 
 #[derive(Debug)]
-pub struct QuoteProcessor {
-    accumulator: TextAccumulator,
-}
+pub struct QuoteParser;
 
-impl QuoteProcessor {
+impl QuoteParser {
     pub fn new() -> Self {
-        QuoteProcessor { accumulator: TextAccumulator::new() }
+        QuoteParser {}
     }
 }
 
-impl BlockProcessor for QuoteProcessor {
-    fn can_process(&self, line_type: LineType) -> bool {
-        matches!(line_type, LineType::Quote)
+impl BlockParserInner for QuoteParser {
+    fn inspect_line(&self, line_type: LineType, _: &str) -> InspectOutput {
+        match line_type {
+            LineType::Quote => InspectOutput::Accept,
+            _ => InspectOutput::Reject,
+        }
     }
 
-    fn process_line(&mut self, _: LineType, line: String) {
-        let prefix_len = constants::QUOTE_TOKEN.len();
-        let line = line.chars().skip(prefix_len).collect();
-
-        self.accumulator.add(line);
+    fn take_line(&mut self, line_type: LineType, line: &str) -> TakeOutput {
+        self.inspect_line(line_type, line)
+            .map_to_take(|| TakeOutput::Accepted)
     }
 
-    fn consume(self) -> Block {
-        Block::Quote(self.accumulator.consume())
+    fn process(&self, lines: Vec<(LineType, String)>) -> Block {
+        let mut accumulator = TextAccumulator::new();
+
+        for (_, line) in lines {
+            accumulator.add(parse_quote(&line));
+        }
+
+        Block::Quote(accumulator.consume())
     }
 }

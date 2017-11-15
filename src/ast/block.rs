@@ -31,6 +31,6 @@ pub enum Block {
     Heading(HeadingLevel, String),
     Paragraph(Text),
     Quote(Text),
-    Preformatted(Option<Decorator>, String),
+    Preformatted(Option<Decorator>, Vec<String>),
     List(ListType, Vec<Text>),
 }

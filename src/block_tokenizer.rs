@@ -1,5 +1,6 @@
 use super::constants;
 use super::tokens::{Line, LineType};
+use super::ast::Decorator;
 use std::borrow::Cow;
 
 macro_rules! parse_line_starter {
@@ -10,6 +11,13 @@ macro_rules! parse_line_starter {
     }
 }
 
+macro_rules! parse_line_starter2 {
+    ($line: expr, $starter: expr, $variant: ident) => {
+        $line.chars().skip($starter.len()).collect()
+    }
+}
+
+
 macro_rules! detect_line_starter {
   ($line:expr, $starter:expr, $variant: ident) => {
     if $line.starts_with($starter) {
@@ -19,15 +27,22 @@ macro_rules! detect_line_starter {
 }
 
 // TODO: parse decorator contents
-fn parse_decorator(line: &str) -> Line {
+pub fn parse_decorator(line: &str) -> Option<Decorator> {
     let trimmed = line.trim();
 
-    Line::Decorator(trimmed.chars().skip(1).take(trimmed.len() - 2).collect())
+    let value: String = trimmed.chars().skip(1).take(trimmed.len() - 2).collect();
+
+    match value.as_ref() {
+        // TODO: parse language
+        "code" => Some(Decorator::Code(None)),
+        "table" => Some(Decorator::Table),
+        _ => None,
+    }
 }
 
 fn is_decorator(line: &str) -> bool {
-    line.starts_with(constants::ANNOTATION_PREFIX_TOKEN) &&
-        line.trim().ends_with(constants::ANNOTATION_SUFFIX_TOKEN)
+    line.starts_with(constants::ANNOTATION_PREFIX_TOKEN)
+        && line.trim().ends_with(constants::ANNOTATION_SUFFIX_TOKEN)
 }
 
 fn is_divider(line: &str) -> bool {
@@ -61,13 +76,17 @@ pub fn get_line_type(line: &str) -> LineType {
     LineType::Text
 }
 
+pub fn parse_quote(line: &str) -> String {
+    parse_line_starter2!(line, constants::QUOTE_TOKEN, Quote)
+}
+
 #[deprecated]
 pub fn parse_line(line_type: LineType, line: &str) -> Line {
     match line_type {
         LineType::Blank => Line::Blank,
         LineType::Divider => Line::Divider,
         LineType::Text => Line::Text(line.into()),
-        LineType::Decorator => parse_decorator(&line),
+        LineType::Decorator => unreachable!(),
         LineType::Heading1 => parse_line_starter!(line, constants::HEADING1_TOKEN, Heading1),
         LineType::Heading2 => parse_line_starter!(line, constants::HEADING2_TOKEN, Heading2),
         LineType::Heading3 => parse_line_starter!(line, constants::HEADING3_TOKEN, Heading3),
