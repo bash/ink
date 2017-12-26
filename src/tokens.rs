@@ -1,6 +1,8 @@
 use std::borrow::Cow;
+use super::ast::HeadingLevel;
 
 #[derive(Debug, PartialEq, Eq)]
+#[deprecated]
 pub enum Line<'a> {
     Blank,
     Divider,
@@ -14,7 +16,7 @@ pub enum Line<'a> {
     OrderedList(Cow<'a, str>),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum LineType {
     Blank,
     Divider,
@@ -40,6 +42,24 @@ impl<'a> Line<'a> {
             Line::Decorator(value) |
             Line::UnorderedList(value) |
             Line::OrderedList(value) => Some(value),
+        }
+    }
+}
+
+impl LineType {
+    pub fn is_heading(&self) -> bool {
+        matches!(
+            *self,
+            LineType::Heading1 | LineType::Heading2 | LineType::Heading3
+        )
+    }
+
+    pub fn get_heading_level(&self) -> Option<HeadingLevel> {
+        match *self {
+            LineType::Heading1 => Some(HeadingLevel::Level1),
+            LineType::Heading2 => Some(HeadingLevel::Level2),
+            LineType::Heading3 => Some(HeadingLevel::Level3),
+            _ => None,
         }
     }
 }

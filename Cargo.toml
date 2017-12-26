@@ -1,17 +1,25 @@
 [package]
-name = "squid"
-version = "0.0.0"
 authors = ["Ruben Schmidmeister <ruben.schmidmeister@icloud.com>, Jan Nils Ferner <jn_ferner@hotmail.de>"]
 description = "🦑 Lightweight & Simple Markup Language"
-license = "MIT"
 documentation = "https://docs.rs/squid"
 homepage = "https://github.com/squid-lang/squid"
-repository = "https://github.com/squid-lang/squid"
+license = "MIT"
+name = "squid"
 readme = "readme.md"
+repository = "https://github.com/squid-lang/squid"
+version = "0.0.0"
 
-[badges]
-travis-ci = { repository = "squid-lang/squid", branch = "master" }
-codecov = { repository = "squid-lang/squid", branch = "master", service = "github" }
-maintenance = { status = "experimental" }
+[badges.codecov]
+branch = "master"
+repository = "squid-lang/squid"
+service = "github"
+
+[badges.maintenance]
+status = "experimental"
+
+[badges.travis-ci]
+branch = "master"
+repository = "squid-lang/squid"
 
 [dependencies]
+matches = "0.1.6"
