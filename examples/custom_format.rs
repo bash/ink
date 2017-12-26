@@ -1,8 +1,8 @@
 extern crate squid;
 
-use squid::BlockParser;
-use squid::ast::{HeadingLevel, Block};
-use squid::html::{Renderer, Format};
+use squid::Parser;
+use squid::ast::{Block, HeadingLevel};
+use squid::html::{Format, Renderer};
 use squid::html::builders::Builder;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -30,7 +30,7 @@ impl Format for CustomFormat {
 fn main() {
     let file = File::open("examples/demo.sq").unwrap();
     let reader = BufReader::new(&file);
-    let parser = BlockParser::new(reader.lines());
+    let parser = Parser::new(reader.lines());
     let renderer = Renderer::with_format(
         CustomFormat,
         parser.filter(|block| match *block {

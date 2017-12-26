@@ -1,73 +1,67 @@
 use super::error::ParseError;
 use std::error::Error;
-use std::marker::PhantomData;
-use std::borrow::Cow;
 
-pub type ParserInputResult<'a> = Result<Cow<'a, str>, ParseError>;
+pub type ParserInputResult = Result<String, ParseError>;
 
 #[derive(Debug)]
-pub struct IntoParserInputIter<'a, S, I>
+pub struct IntoParserInputIter<S, I>
 where
-    S: IntoParserInput<'a>,
+    S: IntoParserInput,
     I: Iterator<Item = S>,
 {
     inner: I,
-    _marker: PhantomData<&'a ()>,
 }
 
-pub trait IntoParserInput<'a> {
-    fn into_parser_input(self) -> ParserInputResult<'a>;
+pub trait IntoParserInput {
+    fn into_parser_input(self) -> ParserInputResult;
 }
 
-impl<'a, E> IntoParserInput<'a> for Result<&'a str, E>
+impl<'a, E> IntoParserInput for Result<&'a str, E>
 where
     E: Error + 'static,
 {
-    fn into_parser_input(self) -> ParserInputResult<'a> {
-        self.map_err(ParseError::from_error).map(Cow::Borrowed)
+    fn into_parser_input(self) -> ParserInputResult {
+        self.map_err(ParseError::from_error).map(|val| val.into())
     }
 }
 
-impl<'a, E> IntoParserInput<'a> for Result<String, E>
+impl<E> IntoParserInput for Result<String, E>
 where
     E: Error + 'static,
 {
-    fn into_parser_input(self) -> ParserInputResult<'a> {
-        self.map_err(ParseError::from_error).map(Cow::Owned)
+    fn into_parser_input(self) -> ParserInputResult {
+        self.map_err(ParseError::from_error)
     }
 }
 
-impl<'a> IntoParserInput<'a> for &'a str {
-    fn into_parser_input(self) -> ParserInputResult<'a> {
-        Ok(Cow::Borrowed(self))
+impl<'a> IntoParserInput for &'a str {
+    fn into_parser_input(self) -> ParserInputResult {
+        Ok(self.into())
     }
 }
 
-impl<'a> IntoParserInput<'a> for String {
-    fn into_parser_input(self) -> ParserInputResult<'a> {
-        Ok(Cow::Owned(self))
+impl IntoParserInput for String {
+    fn into_parser_input(self) -> ParserInputResult {
+        Ok(self)
     }
 }
 
-impl<'a, S, I> IntoParserInputIter<'a, S, I>
+impl<S, I> IntoParserInputIter<S, I>
 where
-    S: IntoParserInput<'a>,
+    S: IntoParserInput,
     I: Iterator<Item = S>,
 {
     pub fn new(inner: I) -> Self {
-        IntoParserInputIter {
-            inner,
-            _marker: PhantomData,
-        }
+        IntoParserInputIter { inner }
     }
 }
 
-impl<'a, S, I> Iterator for IntoParserInputIter<'a, S, I>
+impl<S, I> Iterator for IntoParserInputIter<S, I>
 where
-    S: IntoParserInput<'a>,
+    S: IntoParserInput,
     I: Iterator<Item = S>,
 {
-    type Item = ParserInputResult<'a>;
+    type Item = ParserInputResult;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.inner.next()?.into_parser_input())
