@@ -1,22 +1,5 @@
-[package]
-authors = ["Ruben Schmidmeister <ruben.schmidmeister@icloud.com>, Jan Nils Ferner <jn_ferner@hotmail.de>"]
-description = "🦑 Lightweight & Simple Markup Language"
-documentation = "https://docs.rs/squid"
-homepage = "https://github.com/squid-lang/squid"
-license = "MIT"
-name = "squid"
-readme = "readme.md"
-repository = "https://github.com/squid-lang/squid"
-version = "0.0.0"
-
-[badges.codecov]
-branch = "master"
-repository = "squid-lang/squid"
-service = "github"
-
-[badges.maintenance]
-status = "experimental"
-
-[badges.travis-ci]
-branch = "master"
-repository = "squid-lang/squid"
+[workspace]
+members = [
+  "squid-core",
+  "squid-inline",
+]

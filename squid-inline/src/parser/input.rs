@@ -1,4 +1,4 @@
-use crate::span::Span;
+use squid_core::span::Span;
 
 #[derive(Debug)]
 pub struct ParserInput<'a> {
@@ -14,10 +14,6 @@ impl<'a> ParserInput<'a> {
       pos: 0,
       base_span: base_span.unwrap_or_else(|| Span::new(0, input.len())),
     }
-  }
-
-  pub(crate) fn pos(&self) -> usize {
-    self.pos
   }
 
   pub(crate) fn skip_chars(&mut self, chars: usize) {

@@ -4,11 +4,16 @@
 ///
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Span {
+  /// Offset in bytes
   pub offset: usize,
+  /// Length in bytes
   pub len: usize,
 }
 
 impl Span {
+  ///
+  /// Creates a new `Span` with a given offset and length.
+  ///
   pub fn new(offset: usize, len: usize) -> Self {
     Span { offset, len }
   }

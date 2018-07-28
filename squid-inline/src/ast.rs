@@ -1,4 +1,4 @@
-use crate::span::Span;
+use squid_core::span::Span;
 
 pub type Inline<'a> = Vec<InlineFormattingNode<'a>>;
 
