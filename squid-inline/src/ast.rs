@@ -2,18 +2,19 @@ use squid_core::span::Span;
 
 pub type Inline<'a> = Vec<InlineFormatting<'a>>;
 
-#[derive(Debug, Eq, PartialEq)]
-pub struct InlineFormatting<'a> {
-    pub span: Span,
-    pub kind: InlineFormattingNode<'a>,
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub enum FormattingType {
+    Normal,
+    Emphasis,
+    StrongEmphasis,
+    UltraEmphasis,
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum InlineFormattingNode<'a> {
-    Normal(Vec<InlineEntity<'a>>),
-    Emphasis(Vec<InlineEntity<'a>>),
-    StrongEmphasis(Vec<InlineEntity<'a>>),
-    UltraEmphasis(Vec<InlineEntity<'a>>),
+pub struct InlineFormatting<'a> {
+    pub span: Span,
+    pub formatting: FormattingType,
+    pub entities: Vec<InlineEntity<'a>>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -33,8 +34,16 @@ pub enum InlineEntityNode<'a> {
 }
 
 impl<'a> InlineFormatting<'a> {
-    pub(crate) fn new(span: Span, kind: InlineFormattingNode<'a>) -> Self {
-        Self { span, kind }
+    pub(crate) fn new(
+        span: Span,
+        formatting: FormattingType,
+        entities: Vec<InlineEntity<'a>>,
+    ) -> Self {
+        Self {
+            span,
+            formatting,
+            entities,
+        }
     }
 }
 

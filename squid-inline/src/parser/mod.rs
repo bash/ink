@@ -1,7 +1,7 @@
 mod input;
 
 pub use self::input::{ParserInput, ParserInputBuilder};
-use crate::ast::{Inline, InlineEntity, InlineEntityNode, InlineFormatting, InlineFormattingNode};
+use crate::ast::{FormattingType, Inline, InlineEntity, InlineEntityNode, InlineFormatting};
 
 pub fn parse<'a>(mut input: ParserInput<'a>) -> Inline<'a> {
     let len = input.len();
@@ -11,7 +11,8 @@ pub fn parse<'a>(mut input: ParserInput<'a>) -> Inline<'a> {
 
     vec![InlineFormatting::new(
         span,
-        InlineFormattingNode::Normal(entities),
+        FormattingType::Normal,
+        entities,
     )]
 }
 
@@ -25,9 +26,7 @@ fn parse_entities(mut input: ParserInput<'a>) -> Vec<InlineEntity<'a>> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::ast::{
-        self, InlineEntity, InlineEntityNode, InlineFormatting, InlineFormattingNode,
-    };
+    use crate::ast::{self, FormattingType, InlineEntity, InlineEntityNode, InlineFormatting};
     use squid_core::span::Span;
 
     #[test]
@@ -36,10 +35,11 @@ mod test {
 
         let expected = vec![InlineFormatting::new(
             Span::new(0, 11),
-            ast::InlineFormattingNode::Normal(vec![ast::InlineEntity::new(
+            FormattingType::Normal,
+            vec![ast::InlineEntity::new(
                 Span::new(0, 11),
                 ast::InlineEntityNode::Text("foo bar baz"),
-            )]),
+            )],
         )];
 
         assert_eq!(result, expected);
@@ -55,10 +55,11 @@ mod test {
 
         let expected = vec![InlineFormatting::new(
             Span::new(100, 11),
-            InlineFormattingNode::Normal(vec![InlineEntity::new(
+            FormattingType::Normal,
+            vec![InlineEntity::new(
                 Span::new(100, 11),
                 InlineEntityNode::Text("foo bar baz"),
-            )]),
+            )],
         )];
 
         assert_eq!(result, expected);
@@ -70,24 +71,27 @@ mod test {
         let expected = vec![
             InlineFormatting::new(
                 Span::new(0, 4),
-                InlineFormattingNode::Normal(vec![InlineEntity::new(
+                FormattingType::Normal,
+                vec![InlineEntity::new(
                     Span::new(0, 4),
                     InlineEntityNode::Text("foo "),
-                )]),
+                )],
             ),
             InlineFormatting::new(
                 Span::new(4, 5),
-                InlineFormattingNode::Emphasis(vec![InlineEntity::new(
+                FormattingType::Emphasis,
+                vec![InlineEntity::new(
                     Span::new(5, 3),
                     InlineEntityNode::Text("bar"),
-                )]),
+                )],
             ),
             InlineFormatting::new(
                 Span::new(5, 4),
-                InlineFormattingNode::Normal(vec![InlineEntity::new(
+                FormattingType::Normal,
+                vec![InlineEntity::new(
                     Span::new(5, 4),
                     InlineEntityNode::Text("foo "),
-                )]),
+                )],
             ),
         ];
 
