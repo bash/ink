@@ -28,18 +28,12 @@ addons:
       - libiberty-dev
 
 before_script:
-  # install dependencies
-  - cargo install --list | grep clippy || cargo install clippy
-  - cargo install --list | grep rustfmt || cargo install rustfmt
-  - cargo install --list | grep cargo-update || cargo install cargo-update
-
-  # install updates
-  - cargo install-update -a
+  - rustup component add rustfmt-preview
+  - rustup component add clippy-preview
 
 script:
-  # linting
-  - cargo fmt -- --write-mode=diff
-  # - cargo clippy
+  - cargo fmt -- --check
+  - cargo clippy --verbose
   - cargo build --verbose
   - cargo test --verbose
 
