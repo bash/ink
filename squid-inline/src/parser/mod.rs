@@ -1,19 +1,25 @@
 mod input;
 
 pub use self::input::{ParserInput, ParserInputBuilder};
-use crate::ast;
+use crate::ast::{Inline, InlineEntity, InlineEntityNode, InlineFormatting, InlineFormattingNode};
 
-pub fn parse<'a>(mut input: ParserInput<'a>) -> ast::Inline<'a> {
+pub fn parse<'a>(mut input: ParserInput<'a>) -> Inline<'a> {
     let len = input.len();
     let (span, text) = input.take(len);
 
-    vec![ast::InlineFormatting {
+    let entities = parse_entities(ParserInputBuilder::new(text).with_base_span(span).build());
+
+    vec![InlineFormatting::new(
         span,
-        kind: ast::InlineFormattingNode::Normal(vec![ast::InlineEntity {
-            span,
-            kind: ast::InlineEntityNode::Text(text),
-        }]),
-    }]
+        InlineFormattingNode::Normal(entities),
+    )]
+}
+
+fn parse_entities(mut input: ParserInput<'a>) -> Vec<InlineEntity<'a>> {
+    let len = input.len();
+    let (span, text) = input.take(len);
+
+    vec![InlineEntity::new(span, InlineEntityNode::Text(text))]
 }
 
 #[cfg(test)]
