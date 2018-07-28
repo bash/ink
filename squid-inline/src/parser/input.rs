@@ -21,14 +21,12 @@ impl<'a> ParserInputBuilder<'a> {
         }
     }
 
-    pub fn with_base_span(self: Self, base_span: Span) -> Self {
-        ParserInputBuilder {
-            base_span: base_span.into(),
-            ..self
-        }
+    pub fn with_base_span(mut self, base_span: Span) -> Self {
+        self.base_span = base_span.into();
+        self
     }
 
-    pub fn build(self: Self) -> ParserInput<'a> {
+    pub fn build(self) -> ParserInput<'a> {
         ParserInput {
             input: self.input,
             pos: 0,
