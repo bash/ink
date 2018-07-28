@@ -32,8 +32,14 @@ pub enum InlineEntityNode<'a> {
     },
 }
 
-// \** **foo `bar` <https://github.com|GitHub>**
-//     ^^-------------------------------------^^
+impl<'a> InlineFormatting<'a> {
+    pub(crate) fn new(span: Span, kind: InlineFormattingNode<'a>) -> Self {
+        Self { span, kind }
+    }
+}
 
-// foo `bar` <https://github.com GitHub>
-//     ^---^ ^-------------------------^
+impl<'a> InlineEntity<'a> {
+    pub(crate) fn new(span: Span, kind: InlineEntityNode<'a>) -> Self {
+        Self { span, kind }
+    }
+}

@@ -19,20 +19,22 @@ pub fn parse<'a>(mut input: ParserInput<'a>) -> ast::Inline<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::ast;
+    use crate::ast::{
+        self, InlineEntity, InlineEntityNode, InlineFormatting, InlineFormattingNode,
+    };
     use squid_core::span::Span;
 
     #[test]
     fn test_parse_plain_text_works() {
         let result = parse(ParserInputBuilder::new("foo bar baz").build());
 
-        let expected = vec![ast::InlineFormatting {
-            span: Span::new(0, 11),
-            kind: ast::InlineFormattingNode::Normal(vec![ast::InlineEntity {
-                span: Span::new(0, 11),
-                kind: ast::InlineEntityNode::Text("foo bar baz"),
-            }]),
-        }];
+        let expected = vec![InlineFormatting::new(
+            Span::new(0, 11),
+            ast::InlineFormattingNode::Normal(vec![ast::InlineEntity::new(
+                Span::new(0, 11),
+                ast::InlineEntityNode::Text("foo bar baz"),
+            )]),
+        )];
 
         assert_eq!(result, expected);
     }
@@ -45,13 +47,13 @@ mod test {
                 .build(),
         );
 
-        let expected = vec![ast::InlineFormatting {
-            span: Span::new(100, 11),
-            kind: ast::InlineFormattingNode::Normal(vec![ast::InlineEntity {
-                span: Span::new(100, 11),
-                kind: ast::InlineEntityNode::Text("foo bar baz"),
-            }]),
-        }];
+        let expected = vec![InlineFormatting::new(
+            Span::new(100, 11),
+            InlineFormattingNode::Normal(vec![InlineEntity::new(
+                Span::new(100, 11),
+                InlineEntityNode::Text("foo bar baz"),
+            )]),
+        )];
 
         assert_eq!(result, expected);
     }
@@ -60,27 +62,27 @@ mod test {
     fn test_parse_emphasis_works() {
         let result = parse(ParserInputBuilder::new("foo *bar* baz").build());
         let expected = vec![
-            ast::InlineFormatting {
-                span: Span::new(0, 4),
-                kind: ast::InlineFormattingNode::Normal(vec![ast::InlineEntity {
-                    span: Span::new(0, 4),
-                    kind: ast::InlineEntityNode::Text("foo "),
-                }]),
-            },
-            ast::InlineFormatting {
-                span: Span::new(4, 5),
-                kind: ast::InlineFormattingNode::Emphasis(vec![ast::InlineEntity {
-                    span: Span::new(5, 3),
-                    kind: ast::InlineEntityNode::Text("bar"),
-                }]),
-            },
-            ast::InlineFormatting {
-                span: Span::new(5, 4),
-                kind: ast::InlineFormattingNode::Normal(vec![ast::InlineEntity {
-                    span: Span::new(5, 4),
-                    kind: ast::InlineEntityNode::Text("foo "),
-                }]),
-            },
+            InlineFormatting::new(
+                Span::new(0, 4),
+                InlineFormattingNode::Normal(vec![InlineEntity::new(
+                    Span::new(0, 4),
+                    InlineEntityNode::Text("foo "),
+                )]),
+            ),
+            InlineFormatting::new(
+                Span::new(4, 5),
+                InlineFormattingNode::Emphasis(vec![InlineEntity::new(
+                    Span::new(5, 3),
+                    InlineEntityNode::Text("bar"),
+                )]),
+            ),
+            InlineFormatting::new(
+                Span::new(5, 4),
+                InlineFormattingNode::Normal(vec![InlineEntity::new(
+                    Span::new(5, 4),
+                    InlineEntityNode::Text("foo "),
+                )]),
+            ),
         ];
 
         assert_eq!(expected, result);
