@@ -5,9 +5,9 @@
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Span {
     /// Offset in bytes
-    pub offset: usize,
+    offset: usize,
     /// Length in bytes
-    pub len: usize,
+    len: usize,
 }
 
 impl Span {

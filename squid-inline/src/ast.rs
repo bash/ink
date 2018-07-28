@@ -12,15 +12,15 @@ pub enum FormattingType {
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Formatting<'a> {
-    pub span: Span,
-    pub formatting: FormattingType,
-    pub entities: Vec<Entity<'a>>,
+    span: Span,
+    formatting: FormattingType,
+    entities: Vec<Entity<'a>>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Entity<'a> {
-    pub span: Span,
-    pub kind: EntityNode<'a>,
+    span: Span,
+    kind: EntityNode<'a>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
