@@ -3,6 +3,7 @@ use squid_core::span::Span;
 pub type Inline<'a> = Vec<Formatting<'a>>;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[non_exhaustive]
 pub enum FormattingType {
     Normal,
     Emphasis,
@@ -24,6 +25,7 @@ pub struct Entity<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum EntityNode<'a> {
     Text(&'a str),
     LineBreak,
