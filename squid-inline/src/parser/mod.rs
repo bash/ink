@@ -55,4 +55,34 @@ mod test {
 
         assert_eq!(result, expected);
     }
+
+    #[test]
+    fn test_parse_emphasis_works() {
+        let result = parse(ParserInputBuilder::new("foo *bar* baz").build());
+        let expected = vec![
+            ast::InlineFormatting {
+                span: Span::new(0, 4),
+                kind: ast::InlineFormattingNode::Normal(vec![ast::InlineEntity {
+                    span: Span::new(0, 4),
+                    kind: ast::InlineEntityNode::Text("foo "),
+                }]),
+            },
+            ast::InlineFormatting {
+                span: Span::new(4, 5),
+                kind: ast::InlineFormattingNode::Emphasis(vec![ast::InlineEntity {
+                    span: Span::new(5, 3),
+                    kind: ast::InlineEntityNode::Text("bar"),
+                }]),
+            },
+            ast::InlineFormatting {
+                span: Span::new(5, 4),
+                kind: ast::InlineFormattingNode::Normal(vec![ast::InlineEntity {
+                    span: Span::new(5, 4),
+                    kind: ast::InlineEntityNode::Text("foo "),
+                }]),
+            },
+        ];
+
+        assert_eq!(expected, result);
+    }
 }
