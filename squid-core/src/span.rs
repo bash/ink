@@ -19,13 +19,12 @@ impl Span {
     }
 
     ///
-    /// Turns a relative span into an absolute `Span`
-    /// given a base `Span`.
+    /// Creates a new `Span` with a given base `Span`.
     ///
-    pub fn absolute(&self, other: Self) -> Self {
+    pub fn with_base(base: Self, offset: usize, len: usize) -> Self {
         Span {
-            offset: other.offset + self.offset,
-            len: self.len,
+            offset: base.offset + offset,
+            len: len,
         }
     }
 }
@@ -35,8 +34,8 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_absolute() {
-        let result = Span::new(24, 6).absolute(Span::new(100, 0));
+    fn test_with_base() {
+        let result = Span::with_base(Span::new(100, 0), 24, 6);
 
         assert_eq!(6, result.len);
         assert_eq!(124, result.offset);
