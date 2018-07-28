@@ -4,15 +4,13 @@ pub use self::input::{ParserInput, ParserInputBuilder};
 use crate::ast;
 
 pub fn parse<'a>(mut input: ParserInput<'a>) -> ast::Inline<'a> {
-    let pos = input.pos();
     let len = input.len();
-    let text = input.take(len);
-    let span = input.create_span(pos, len);
+    let (span, text) = input.take(len);
 
     vec![ast::InlineFormatting {
-        span: span,
+        span,
         kind: ast::InlineFormattingNode::Normal(vec![ast::InlineEntity {
-            span: span,
+            span,
             kind: ast::InlineEntityNode::Text(text),
         }]),
     }]

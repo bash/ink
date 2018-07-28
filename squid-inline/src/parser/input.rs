@@ -38,25 +38,22 @@ impl<'a> ParserInputBuilder<'a> {
 }
 
 impl<'a> ParserInput<'a> {
-    pub(crate) fn take(&mut self, chars: usize) -> &'a str {
+    pub(crate) fn take(&mut self, chars: usize) -> (Span, &'a str) {
         let len = self.input[self.pos..]
             .chars()
             .take(chars)
             .fold(0, |acc, ch| acc + ch.len_utf8());
 
+        let span = self.create_span(len);
         let consumed = &self.input[self.pos..(self.pos + len)];
 
         self.pos += len;
 
-        consumed
+        (span, consumed)
     }
 
     pub(crate) fn len(&self) -> usize {
         self.input[self.pos..].len()
-    }
-
-    pub(crate) fn pos(&self) -> usize {
-        self.pos
     }
 
     pub(crate) fn skip_chars(&mut self, chars: usize) {
@@ -72,8 +69,8 @@ impl<'a> ParserInput<'a> {
         self.input[self.pos..].starts_with(needle)
     }
 
-    pub(crate) fn create_span(&self, offset: usize, len: usize) -> Span {
-        Span::with_base(self.base_span, offset, len)
+    fn create_span(&self, len: usize) -> Span {
+        Span::with_base(self.base_span, self.pos, len)
     }
 }
 
@@ -90,5 +87,16 @@ mod test {
         input.skip_chars(4);
 
         assert_eq!(true, input.starts_with("*"));
+    }
+
+    #[test]
+    fn test_take_works() {
+        let mut input = ParserInputBuilder::new("foo bar baz")
+            .with_base_span(Span::new(200, 0))
+            .build();
+
+        assert_eq!((Span::new(200, 3), "foo"), input.take(3));
+        assert_eq!((Span::new(203, 4), " bar"), input.take(4));
+        assert_eq!((Span::new(207, 4), " baz"), input.take(4));
     }
 }
