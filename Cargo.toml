@@ -20,6 +20,3 @@ status = "experimental"
 [badges.travis-ci]
 branch = "master"
 repository = "squid-lang/squid"
-
-[dependencies]
-matches = "0.1.6"

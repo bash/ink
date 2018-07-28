@@ -1,5 +1,5 @@
 ///
-/// Represents a region of code, used for error reporting and
+/// Represents a region of source code, used for error reporting and
 /// source map generation.
 ///
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
