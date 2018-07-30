@@ -2,6 +2,7 @@
 /// Represents a region of source code, used for error reporting and
 /// source map generation.
 ///
+// TODO: think about making offset and len character instead of byte offsets
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Span {
     /// Offset in bytes
