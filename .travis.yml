@@ -36,6 +36,7 @@ script:
   - cargo clippy --verbose
   - cargo build --verbose
   - cargo test --verbose
+  - cargo test --doc --verbose
 
 
 after_success: |

@@ -1,33 +1,39 @@
 mod input;
 
 pub use self::input::{ParserInput, ParserInputBuilder};
-use crate::ast::{Entity, EntityNode, Formatting, FormattingType, Inline};
-
-const EMPHASIS_TOKEN: &str = "*";
+use crate::ast::Inline;
 
 #[derive(Debug)]
+///
+/// The inline parser takes a string and turns it into AST.
+///
+/// **Example**
+///
+/// ```rust
+///  use squid_inline::parser::{Parser, ParserInputBuilder};
+///
+///  let parser = Parser::new(ParserInputBuilder::new("foo *bar* baz").build());
+///  let ast = parser.parse();
+/// ```
+///
 pub struct Parser<'a> {
     input: ParserInput<'a>,
 }
 
 impl<'a> Parser<'a> {
+    ///
+    /// Creates a new `Parser` with a given input.
+    ///
     pub fn new(input: ParserInput<'a>) -> Self {
         Self { input }
     }
 
+    ///
+    /// Parses the parser's input into ast. Consumes the parser
+    ///
     pub fn parse(self) -> Inline<'a> {
-        let mut input = self.input;
-        let mut result = Vec::new();
-
-        result
+        unimplemented!();
     }
-}
-
-fn parse_entities(mut input: ParserInput<'a>) -> Vec<Entity<'a>> {
-    let len = input.len();
-    let (span, text) = input.take(len);
-
-    vec![Entity::new(span, EntityNode::Text(text))]
 }
 
 #[cfg(test)]
@@ -36,7 +42,7 @@ mod test {
     use crate::ast::{Entity, EntityNode, Formatting, FormattingType};
     use squid_core::span::Span;
 
-    // #[test]
+    #[test]
     fn test_parse_plain_text_works() {
         let parser = Parser::new(ParserInputBuilder::new("foo bar baz").build());
         let result = parser.parse();
@@ -53,7 +59,7 @@ mod test {
         assert_eq!(expected, result);
     }
 
-    // #[test]
+    #[test]
     fn test_parse_plain_text_works_with_base_span() {
         let parser = Parser::new(
             ParserInputBuilder::new("foo bar baz")
