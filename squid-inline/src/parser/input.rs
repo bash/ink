@@ -4,6 +4,8 @@ use squid_core::span::Span;
 const EMPHASIS_TOKEN: (usize, &str) = (1, "*");
 const STRONG_EMPHASIS_TOKEN: (usize, &str) = (2, "**");
 const ULTRA_EMPHASIS_TOKEN: (usize, &str) = (3, "***");
+const LINK_LEFT_TOKEN: &str = "<";
+const LINK_RIGHT_TOKEN: &str = ">";
 
 #[derive(Debug)]
 pub struct ParserInputBuilder<'a> {
@@ -121,6 +123,22 @@ impl<'a> ParserInput<'a> {
         expect_token!(ULTRA_EMPHASIS_TOKEN, ParserTokenInner::UltraEmphasis);
         expect_token!(STRONG_EMPHASIS_TOKEN, ParserTokenInner::StrongEmphasis);
         expect_token!(EMPHASIS_TOKEN, ParserTokenInner::Emphasis);
+
+        if self.starts_with(LINK_LEFT_TOKEN) {
+            return Some(ParserToken {
+                left: true,
+                right: false,
+                kind: ParserTokenInner::Link,
+            });
+        }
+
+        if self.starts_with(LINK_RIGHT_TOKEN) {
+            return Some(ParserToken {
+                left: false,
+                right: true,
+                kind: ParserTokenInner::Link,
+            });
+        }
 
         None
     }
@@ -285,5 +303,26 @@ mod test {
         assert_eq!("o", input.previous_char());
         input.take(1);
         assert_eq!("o", input.previous_char());
+    }
+
+    #[test]
+    fn test_link_token_works() {
+        assert_eq!(
+            Some(ParserToken {
+                left: true,
+                right: false,
+                kind: ParserTokenInner::Link,
+            }),
+            ParserInputBuilder::new("<").build().next_token()
+        );
+
+        assert_eq!(
+            Some(ParserToken {
+                left: false,
+                right: true,
+                kind: ParserTokenInner::Link,
+            }),
+            ParserInputBuilder::new(">").build().next_token()
+        );
     }
 }
