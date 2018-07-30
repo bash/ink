@@ -81,7 +81,7 @@ impl<'a> ParserInputBuilder<'a> {
 impl<'a> ParserInput<'a> {
     pub(crate) fn take(&mut self, chars: usize) -> (Span, &'a str) {
         let consumed = &self.input.char_slice(self.pos..(self.pos + chars));
-        let span = self.create_span(consumed.len());
+        let span = self.create_span(chars);
 
         self.pos += chars;
 
@@ -89,11 +89,11 @@ impl<'a> ParserInput<'a> {
     }
 
     pub(crate) fn len(&self) -> usize {
-        self.input.char_slice(self.pos..).len()
+        self.input.char_slice(self.pos..).chars().count()
     }
 
     pub(crate) fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.input.char_slice(self.pos..).is_empty()
     }
 
     pub(crate) fn skip_chars(&mut self, chars: usize) {
@@ -175,11 +175,11 @@ mod test {
 
     #[test]
     fn test_take_works() {
-        let mut input = ParserInputBuilder::new("foo bar baz")
+        let mut input = ParserInputBuilder::new("føø bar baz")
             .with_base_span(Span::new(200, 0))
             .build();
 
-        assert_eq!((Span::new(200, 3), "foo"), input.take(3));
+        assert_eq!((Span::new(200, 3), "føø"), input.take(3));
         assert_eq!((Span::new(203, 4), " bar"), input.take(4));
         assert_eq!((Span::new(207, 4), " baz"), input.take(4));
     }
