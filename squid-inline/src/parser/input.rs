@@ -20,8 +20,8 @@ pub struct ParserInput<'a> {
 
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct ParserToken {
-    left_flanking: bool,
-    right_flanking: bool,
+    left: bool,
+    right: bool,
     kind: ParserTokenInner,
 }
 
@@ -38,12 +38,12 @@ fn is_empty_or_whitespace(slice: &str) -> bool {
 }
 
 impl ParserToken {
-    pub(crate) fn left_flanking(&self) -> bool {
-        self.left_flanking
+    pub(crate) fn left(&self) -> bool {
+        self.left
     }
 
-    pub(crate) fn right_flanking(&self) -> bool {
-        self.right_flanking
+    pub(crate) fn right(&self) -> bool {
+        self.right
     }
 
     pub(crate) fn kind(&self) -> ParserTokenInner {
@@ -108,10 +108,10 @@ impl<'a> ParserInput<'a> {
 
             if self.starts_with($token_matcher.1) {
                 return Some(ParserToken {
-                    left_flanking: !is_empty_or_whitespace(
+                    left: !is_empty_or_whitespace(
                         &self.input.char_slice(next_char_pos..(next_char_pos + 1)),
                     ),
-                    right_flanking: !is_empty_or_whitespace(self.previous_char()),
+                    right: !is_empty_or_whitespace(self.previous_char()),
                     kind: $token,
                 });
             }
@@ -170,8 +170,8 @@ mod test {
 
         assert_eq!(
             ParserToken {
-                left_flanking: true,
-                right_flanking: false,
+                left: true,
+                right: false,
                 kind: ParserTokenInner::Emphasis,
             },
             input.next_token().unwrap()
@@ -181,8 +181,8 @@ mod test {
 
         assert_eq!(
             ParserToken {
-                left_flanking: true,
-                right_flanking: true,
+                left: true,
+                right: true,
                 kind: ParserTokenInner::Emphasis,
             },
             input.next_token().unwrap()
@@ -192,8 +192,8 @@ mod test {
 
         assert_eq!(
             ParserToken {
-                left_flanking: false,
-                right_flanking: true,
+                left: false,
+                right: true,
                 kind: ParserTokenInner::Emphasis,
             },
             input.next_token().unwrap()
@@ -206,8 +206,8 @@ mod test {
 
         assert_eq!(
             ParserToken {
-                left_flanking: true,
-                right_flanking: false,
+                left: true,
+                right: false,
                 kind: ParserTokenInner::StrongEmphasis,
             },
             input.next_token().unwrap()
@@ -217,8 +217,8 @@ mod test {
 
         assert_eq!(
             ParserToken {
-                left_flanking: true,
-                right_flanking: true,
+                left: true,
+                right: true,
                 kind: ParserTokenInner::StrongEmphasis,
             },
             input.next_token().unwrap()
@@ -228,8 +228,8 @@ mod test {
 
         assert_eq!(
             ParserToken {
-                left_flanking: false,
-                right_flanking: true,
+                left: false,
+                right: true,
                 kind: ParserTokenInner::StrongEmphasis,
             },
             input.next_token().unwrap()
