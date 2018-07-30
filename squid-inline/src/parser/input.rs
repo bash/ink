@@ -3,6 +3,7 @@ use squid_core::span::Span;
 
 const EMPHASIS_TOKEN: (usize, &str) = (1, "*");
 const STRONG_EMPHASIS_TOKEN: (usize, &str) = (2, "**");
+const ULTRA_EMPHASIS_TOKEN: (usize, &str) = (3, "***");
 
 #[derive(Debug)]
 pub struct ParserInputBuilder<'a> {
@@ -29,7 +30,7 @@ pub(crate) struct ParserToken {
 pub(crate) enum ParserTokenInner {
     Emphasis,
     StrongEmphasis,
-    SuperEmphasis,
+    UltraEmphasis,
     Link,
 }
 
@@ -117,6 +118,7 @@ impl<'a> ParserInput<'a> {
             }
         }
 
+        expect_token!(ULTRA_EMPHASIS_TOKEN, ParserTokenInner::UltraEmphasis);
         expect_token!(STRONG_EMPHASIS_TOKEN, ParserTokenInner::StrongEmphasis);
         expect_token!(EMPHASIS_TOKEN, ParserTokenInner::Emphasis);
 
@@ -231,6 +233,42 @@ mod test {
                 left: false,
                 right: true,
                 kind: ParserTokenInner::StrongEmphasis,
+            },
+            input.next_token().unwrap()
+        );
+    }
+
+    #[test]
+    fn test_ultra_emphasis_token_works() {
+        let mut input = ParserInputBuilder::new("***foo***bar***").build();
+
+        assert_eq!(
+            ParserToken {
+                left: true,
+                right: false,
+                kind: ParserTokenInner::UltraEmphasis,
+            },
+            input.next_token().unwrap()
+        );
+
+        input.take(6);
+
+        assert_eq!(
+            ParserToken {
+                left: true,
+                right: true,
+                kind: ParserTokenInner::UltraEmphasis,
+            },
+            input.next_token().unwrap()
+        );
+
+        input.take(6);
+
+        assert_eq!(
+            ParserToken {
+                left: false,
+                right: true,
+                kind: ParserTokenInner::UltraEmphasis,
             },
             input.next_token().unwrap()
         );
