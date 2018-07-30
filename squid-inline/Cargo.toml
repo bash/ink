@@ -10,3 +10,4 @@ repository = "https://github.com/squid-lang/squid"
 
 [dependencies]
 squid-core = { path = "../squid-core" }
+char-slice = "1.0.0"
