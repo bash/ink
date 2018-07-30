@@ -33,10 +33,10 @@ before_script:
 
 script:
   - cargo fmt -- --check
-  - cargo clippy --verbose
-  - cargo build --verbose
-  - cargo test --verbose
-  - cargo test --doc --verbose
+  - cargo clippy --verbose --all-features
+  - cargo build --verbose --all-features
+  - cargo test --verbose --all-features
+  - cargo test --doc --verbose --all-features
 
 
 after_success: |
